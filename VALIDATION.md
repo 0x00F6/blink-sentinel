@@ -139,7 +139,7 @@ No new source-delivery archive was created for this modification of the existing
 
 The launcher and in-app title use **Blink Sentinel**. The Home screen's Appearance section lets users choose Dark or Light and stores the setting in Preferences DataStore; a missing or invalid value selects Dark. The active monitoring indicator pulses, stopped monitoring uses the red Presence card, and Blink state labels highlight Armed in bold green and Disarmed in yellow. The application ID and encrypted-session key context remain unchanged for existing installations.
 
-The Makefile supports `make push` and `make release VERSION=0.1.0`; it initializes Git on first use and uses the GitHub CLI for an existing repository. The `.gitignore` excludes local SDK and signing files. The release command attaches the generated APK; a release build without owner-provided local signing is unsigned and requires signing before distributing an installable production APK.
+The Makefile supports `make push` and `make release VERSION=0.1.0`; it initializes Git on first use and uses the GitHub CLI for an existing repository. The release command updates and logs the Android `versionName` in `app/build.gradle.kts`, so subsequent local builds use the same version; it commits and pushes the version change, creates the matching `vVERSION` tag, and attaches the generated APK. The `.gitignore` excludes local SDK and signing files. A release build without owner-provided local signing is unsigned and requires signing before distributing an installable production APK.
 
 This update was compiled with:
 

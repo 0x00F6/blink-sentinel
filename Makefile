@@ -249,6 +249,25 @@ release:
 		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Use GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git.' '$(COLOR_RESET)' >&2
 		exit 2
 	fi
+	gradle_file="app/build.gradle.kts"
+	version_name_count="$$(grep -Ec '^[[:space:]]*versionName = "[^"]+"[[:space:]]*$$' "$$gradle_file" || true)"
+	if [[ "$$version_name_count" != 1 ]]; then
+		printf '%b%s%b\n' '$(COLOR_ERROR)' "❌ ERROR: Expected exactly one literal versionName in $$gradle_file; found $$version_name_count." '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Restore one line such as versionName = "1.0.0" in defaultConfig, then retry the release.' '$(COLOR_RESET)' >&2
+		exit 1
+	fi
+	current_version="$$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)"[[:space:]]*$$/\1/p' "$$gradle_file")"
+	if [[ "$$current_version" != "$$version" ]]; then
+		if ! sed -i.bak -E "s|^([[:space:]]*versionName = \")[^\"]+(\"[[:space:]]*)$$|\\1$$version\\2|" "$$gradle_file"; then
+			printf '%b%s%b\n' '$(COLOR_ERROR)' "❌ ERROR: Could not update the versionName in $$gradle_file." '$(COLOR_RESET)' >&2
+			printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Check write permissions for app/build.gradle.kts and retry make release.' '$(COLOR_RESET)' >&2
+			exit 1
+		fi
+		rm -f "$$gradle_file.bak"
+		printf '%b%s%b\n' '$(COLOR_INFO)' "📝 Updated Android versionName in $$gradle_file: $$current_version → $$version." '$(COLOR_RESET)'
+	else
+		printf '%b%s%b\n' '$(COLOR_INFO)' "ℹ️  Android versionName in $$gradle_file is already $$version; no file change needed." '$(COLOR_RESET)'
+	fi
 	$(MAKE) --no-print-directory push GIT_REPO="$$main_repo" git_branch="$$PUBLISH_GIT_BRANCH" git_remote="$$PUBLISH_GIT_REMOTE" git_commit_message="$$PUBLISH_COMMIT_MESSAGE"
 	tag="v$$version"
 	if git tag --list "$$tag" | grep -Fxq "$$tag" || gh release view "$$tag" --repo "$$repo" >/dev/null 2>&1; then
