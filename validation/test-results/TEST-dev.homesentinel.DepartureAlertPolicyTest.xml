@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.DepartureAlertPolicyTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:17.839Z" hostname="o" time="0.002">
+  <properties/>
+  <testcase name="returningHomeAllowsAnAlertForTheNextConfirmedDeparture" classname="dev.homesentinel.DepartureAlertPolicyTest" time="0.001"/>
+  <testcase name="temporaryLossAndRapidReturnAreSilent" classname="dev.homesentinel.DepartureAlertPolicyTest" time="0.0"/>
+  <testcase name="startingWhileAlreadyAwayDoesNotAlert" classname="dev.homesentinel.DepartureAlertPolicyTest" time="0.0"/>
+  <testcase name="confirmedDepartureAlertsOnceAfterHome" classname="dev.homesentinel.DepartureAlertPolicyTest" time="0.0"/>
+  <testcase name="disabledSensorOrExpiredEvidenceDoNotBecomeDepartureAlerts" classname="dev.homesentinel.DepartureAlertPolicyTest" time="0.0"/>
+  <testcase name="stoppingAndRestartingDoNotReplayAnAlert" classname="dev.homesentinel.DepartureAlertPolicyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

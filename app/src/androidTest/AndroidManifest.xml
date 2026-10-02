@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <instrumentation
+        android:name="dev.homesentinel.docs.CaptureScreenshotsInstrumentation"
+        android:targetPackage="dev.homesentinel"
+        android:label="Documentation screenshots on an empty emulator" />
+</manifest>

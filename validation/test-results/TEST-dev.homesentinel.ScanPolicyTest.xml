@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.ScanPolicyTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:20.759Z" hostname="o" time="0.029">
+  <properties/>
+  <testcase name="recentCachedNetworksCanPopulateTheSelectionList" classname="dev.homesentinel.ScanPolicyTest" time="0.004"/>
+  <testcase name="signalTimestampBelongsToTheSelectedSsidAndNeverToAnotherAccessPoint" classname="dev.homesentinel.ScanPolicyTest" time="0.001"/>
+  <testcase name="successfulEmptyScanCanBeUsedAsAbsence" classname="dev.homesentinel.ScanPolicyTest" time="0.0"/>
+  <testcase name="whollyStaleResultsAreIgnored" classname="dev.homesentinel.ScanPolicyTest" time="0.0"/>
+  <testcase name="multipleAccessPointsAreGroupedWithoutLosingTheSsid" classname="dev.homesentinel.ScanPolicyTest" time="0.001"/>
+  <testcase name="absentHomeInFreshResultsIsValidEvidence" classname="dev.homesentinel.ScanPolicyTest" time="0.0"/>
+  <testcase name="ssidComparisonIsCaseSensitive" classname="dev.homesentinel.ScanPolicyTest" time="0.001"/>
+  <testcase name="cachedHomeAmongNewResultsDoesNotCountAsPresence" classname="dev.homesentinel.ScanPolicyTest" time="0.0"/>
+  <testcase name="homeIsVisibleWithoutAnyConnectionInformation" classname="dev.homesentinel.ScanPolicyTest" time="0.0"/>
+  <testcase name="selectionListRejectsOldAndFutureResultsIndividually" classname="dev.homesentinel.ScanPolicyTest" time="0.0"/>
+  <testcase name="expiredCachedListIsEmptyWithoutCreatingAbsenceEvidence" classname="dev.homesentinel.ScanPolicyTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

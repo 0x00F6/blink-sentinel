@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.ActivateMonitoringTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:14.384Z" hostname="o" time="0.431">
+  <properties/>
+  <testcase name="bluetoothSelectionStartsWithTheChosenAddressAndMode" classname="dev.homesentinel.ActivateMonitoringTest" time="0.381"/>
+  <testcase name="bluetoothRequiresItsOwnTargetEvenIfWifiHasBeenConfigured" classname="dev.homesentinel.ActivateMonitoringTest" time="0.004"/>
+  <testcase name="unavailableSensorDoesNotEnableMonitoring" classname="dev.homesentinel.ActivateMonitoringTest" time="0.005"/>
+  <testcase name="wifiSelectionIsStoredAndEnabledBeforeServiceStarts" classname="dev.homesentinel.ActivateMonitoringTest" time="0.008"/>
+  <testcase name="missingBlinkRetainsSelectionButStopsOldMonitoring" classname="dev.homesentinel.ActivateMonitoringTest" time="0.008"/>
+  <testcase name="serviceFailureRollsBackEnabledAndKeepsOriginalException" classname="dev.homesentinel.ActivateMonitoringTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

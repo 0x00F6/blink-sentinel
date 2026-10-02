@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.BlinkApiServiceTest" tests="18" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:15.240Z" hostname="o" time="2.461">
+  <properties/>
+  <testcase name="unconfirmedCommandIsNotPresentedAsSuccess" classname="dev.homesentinel.BlinkApiServiceTest" time="1.113"/>
+  <testcase name="armIsConfirmedByReadingActualStateAfterPost" classname="dev.homesentinel.BlinkApiServiceTest" time="0.138"/>
+  <testcase name="httpErrorsIncludeTheOperationStatusAndActualUrl" classname="dev.homesentinel.BlinkApiServiceTest" time="0.037"/>
+  <testcase name="loginAndTwoFactorCanCompleteInTwoCalls" classname="dev.homesentinel.BlinkApiServiceTest" time="0.321"/>
+  <testcase name="alreadyArmedSkipsAnyPost" classname="dev.homesentinel.BlinkApiServiceTest" time="0.034"/>
+  <testcase name="unauthorizedGetRefreshesOnceAndRetries" classname="dev.homesentinel.BlinkApiServiceTest" time="0.132"/>
+  <testcase name="logoutDeletesTheSavedSession" classname="dev.homesentinel.BlinkApiServiceTest" time="0.026"/>
+  <testcase name="remoteErrorIsReportedAndStatusBecomesUnknown" classname="dev.homesentinel.BlinkApiServiceTest" time="0.038"/>
+  <testcase name="redirectToAnotherOriginIsRejectedWithoutForwardingCookies" classname="dev.homesentinel.BlinkApiServiceTest" time="0.037"/>
+  <testcase name="explicitCommandForAnObsoleteSelectionSendsNoRequest" classname="dev.homesentinel.BlinkApiServiceTest" time="0.024"/>
+  <testcase name="disarmIsConfirmedByReadingActualStateAfterPost" classname="dev.homesentinel.BlinkApiServiceTest" time="0.126"/>
+  <testcase name="corruptSavedSessionRequiresNewLogin" classname="dev.homesentinel.BlinkApiServiceTest" time="0.018"/>
+  <testcase name="malformedSystemResponseKeepsItsHttpContext" classname="dev.homesentinel.BlinkApiServiceTest" time="0.023"/>
+  <testcase name="missingArmedFieldRemainsUnknown" classname="dev.homesentinel.BlinkApiServiceTest" time="0.024"/>
+  <testcase name="restartRestoresSessionWithoutResubmittingCredentials" classname="dev.homesentinel.BlinkApiServiceTest" time="0.041"/>
+  <testcase name="invalidRefreshMarksSessionDisconnected" classname="dev.homesentinel.BlinkApiServiceTest" time="0.037"/>
+  <testcase name="expiredSessionRefreshesAndPersistsRotatedToken" classname="dev.homesentinel.BlinkApiServiceTest" time="0.079"/>
+  <testcase name="loginUsesPkceCookiesAndStoresNoPassword" classname="dev.homesentinel.BlinkApiServiceTest" time="0.202"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

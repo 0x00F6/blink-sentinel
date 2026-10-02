@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.PresenceMachineTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:20.723Z" hostname="o" time="0.028">
+  <properties/>
+  <testcase name="rapidReturnCancelsPendingArm" classname="dev.homesentinel.PresenceMachineTest" time="0.0"/>
+  <testcase name="missingSsidCannotTriggerAnAction" classname="dev.homesentinel.PresenceMachineTest" time="0.0"/>
+  <testcase name="restartDoesNotRestorePreviousAwayDecision" classname="dev.homesentinel.PresenceMachineTest" time="0.0"/>
+  <testcase name="repeatedAbsenceDoesNotIssueDuplicateCommand" classname="dev.homesentinel.PresenceMachineTest" time="0.0"/>
+  <testcase name="automaticDisarmCanBeDisabled" classname="dev.homesentinel.PresenceMachineTest" time="0.002"/>
+  <testcase name="presentWifiEntersHomeAndRequestsDisarm" classname="dev.homesentinel.PresenceMachineTest" time="0.001"/>
+  <testcase name="absentWifiStartsDelay" classname="dev.homesentinel.PresenceMachineTest" time="0.001"/>
+  <testcase name="firstAbsentScanNeverArmsEvenAfterLongGap" classname="dev.homesentinel.PresenceMachineTest" time="0.003"/>
+  <testcase name="newAbsenceAtDeadlineArms" classname="dev.homesentinel.PresenceMachineTest" time="0.0"/>
+  <testcase name="repeatedPresenceDoesNotIssueDuplicateCommand" classname="dev.homesentinel.PresenceMachineTest" time="0.003"/>
+  <testcase name="staleOrFutureEvidenceCannotChangeState" classname="dev.homesentinel.PresenceMachineTest" time="0.001"/>
+  <testcase name="duplicateBatchCannotConfirmAbsence" classname="dev.homesentinel.PresenceMachineTest" time="0.0"/>
+  <testcase name="earlyConfirmationDoesNotArm" classname="dev.homesentinel.PresenceMachineTest" time="0.001"/>
+  <testcase name="expirationReturnsUnknown" classname="dev.homesentinel.PresenceMachineTest" time="0.001"/>
+  <testcase name="disabledAutomationStaysUnknown" classname="dev.homesentinel.PresenceMachineTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.BlinkSentinel" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowBackground">#0A0A0A</item>
+        <item name="android:statusBarColor">#0A0A0A</item>
+        <item name="android:navigationBarColor">#0A0A0A</item>
+    </style>
+    <color name="launcher_background">#0A0A0A</color>
+</resources>

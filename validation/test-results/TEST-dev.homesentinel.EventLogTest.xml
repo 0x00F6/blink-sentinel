@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.EventLogTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:18.133Z" hostname="o" time="2.505">
+  <properties/>
+  <testcase name="errorsKeepRequestStatusCausesAndFullTraceAcrossRestart" classname="dev.homesentinel.EventLogTest" time="0.122"/>
+  <testcase name="everyTechnicalFieldIsSanitizedBeforeStorageAndAfterLoading" classname="dev.homesentinel.EventLogTest" time="0.01"/>
+  <testcase name="defaultRetainsTheNewest500EntriesAcrossRestart" classname="dev.homesentinel.EventLogTest" time="0.989"/>
+  <testcase name="clearingPersistsAnEmptyLogAndErrorTypeAlwaysMarksAnError" classname="dev.homesentinel.EventLogTest" time="0.002"/>
+  <testcase name="startupWaitsForTheSavedLimitWithoutDiscardingHistoryAbove500" classname="dev.homesentinel.EventLogTest" time="1.052"/>
+  <testcase name="invalidRetentionDoesNotChangeHistoryOrCapacity" classname="dev.homesentinel.EventLogTest" time="0.311"/>
+  <testcase name="shrinkingRemovesOldestImmediatelyAndRaisingCannotRestoreThem" classname="dev.homesentinel.EventLogTest" time="0.013"/>
+  <testcase name="oldEntriesAndUnknownTypesRemainReadableAndDetailsImplyAnError" classname="dev.homesentinel.EventLogTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

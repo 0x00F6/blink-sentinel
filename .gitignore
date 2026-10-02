@@ -1,0 +1,38 @@
+# Android Studio, Gradle, and generated build output
+.gradle/
+.idea/
+.kotlin/
+**/build/
+**/out/
+**/.cxx/
+**/.externalNativeBuild/
+local.properties
+captures/
+*.iml
+*.apk
+*.aab
+*.ap_
+*.hprof
+*.log
+
+# Locally configured signing keys and credentials
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.key
+*.pem
+key.properties
+keystore.properties
+signing.properties
+.env
+.env.*
+google-services.json
+GoogleService-Info.plist
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Intentionally distributed debug artifact
+!dist/*.apk

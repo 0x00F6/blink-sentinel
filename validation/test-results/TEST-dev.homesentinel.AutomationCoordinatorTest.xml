@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.AutomationCoordinatorTest" tests="18" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:14.830Z" hostname="o" time="0.354">
+  <properties/>
+  <testcase name="returnHomeDisarmsAnArmedSystem" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.127"/>
+  <testcase name="newTargetAndRestartClearTheSignalDateButBlinkSelectionDoesNot" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.012"/>
+  <testcase name="disablingAutomationCancelsOutstandingActions" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.041"/>
+  <testcase name="bluetoothTargetOrModeChangeCancelsDepartureAndResetsEvidence" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.012"/>
+  <testcase name="rapidReturnCancelsTheDepartureTimer" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.013"/>
+  <testcase name="failedScanNeverConfirmsDeparture" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.014"/>
+  <testcase name="logTypesDescribeActualTransitionsWithoutDuplicateOrTimerBasedAbsence" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.027"/>
+  <testcase name="absenceUnknownAndRepeatedCachedSignalsDoNotChangeTheLastSignalDate" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.023"/>
+  <testcase name="disabledWifiInvalidatesEvidenceInsteadOfArming" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.017"/>
+  <testcase name="changingLogRetentionDoesNotResetPendingDeparture" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.012"/>
+  <testcase name="networkRetrySucceedsWhileEvidenceIsFresh" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.007"/>
+  <testcase name="returnCancelsAnOutstandingArmRetry" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.006"/>
+  <testcase name="automaticErrorsRetainTheirOriginalThrowableForDiagnostics" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.004"/>
+  <testcase name="deadlineRequestsOneScanWithoutArmingFromATimer" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.004"/>
+  <testcase name="changedPersistedSettingsCancelCommandBeforeFlowDelivery" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.005"/>
+  <testcase name="restartRequiresNewEvidenceBeforeAnyBlinkCall" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.003"/>
+  <testcase name="newScanAfterDeadlineArmsExactlyOnce" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.004"/>
+  <testcase name="lastSignalUsesThePeripheralTimestampRatherThanTheBatchTimestamp" classname="dev.homesentinel.AutomationCoordinatorTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

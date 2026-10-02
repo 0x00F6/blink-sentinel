@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.LogRetentionSettingsTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:20.642Z" hostname="o" time="0.07">
+  <properties/>
+  <testcase name="existingInstallationsReceiveThe500DefaultWithoutChangingOtherSettings" classname="dev.homesentinel.LogRetentionSettingsTest" time="0.029"/>
+  <testcase name="invalidLimitsRejectTheWholeUpdate" classname="dev.homesentinel.LogRetentionSettingsTest" time="0.014"/>
+  <testcase name="corruptedPersistedLimitsRemainBounded" classname="dev.homesentinel.LogRetentionSettingsTest" time="0.011"/>
+  <testcase name="savedLimitSurvivesRepositoryRecreationAndOtherSettingsUpdates" classname="dev.homesentinel.LogRetentionSettingsTest" time="0.014"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

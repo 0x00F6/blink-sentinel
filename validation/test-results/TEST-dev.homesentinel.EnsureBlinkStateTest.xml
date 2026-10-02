@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.EnsureBlinkStateTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:18.012Z" hostname="o" time="0.115">
+  <properties/>
+  <testcase name="unknownStatusCannotIssuePost" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.014"/>
+  <testcase name="alreadyArmedSkipsPost" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.009"/>
+  <testcase name="changedPresenceDuringStatusCheckCancelsCommand" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.015"/>
+  <testcase name="networkFailureDoesNotIssuePost" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.008"/>
+  <testcase name="blinkErrorIsPropagatedWithoutPost" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.014"/>
+  <testcase name="systemSelectionChangeDuringStatusCheckCancelsTheCommand" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.015"/>
+  <testcase name="alreadyDisarmedSkipsPost" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.003"/>
+  <testcase name="statusAndCommandUseTheSameCapturedSystemId" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.009"/>
+  <testcase name="armChangesADisarmedSystem" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.006"/>
+  <testcase name="disarmChangesAnArmedSystem" classname="dev.homesentinel.EnsureBlinkStateTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

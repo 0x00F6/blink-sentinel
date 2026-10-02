@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.homesentinel.SignalDistanceEstimatorTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-02T20:59:20.804Z" hostname="o" time="0.015">
+  <properties/>
+  <testcase name="referenceSignalsProduceOneMeter" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.001"/>
+  <testcase name="wifiSortsByDistanceAndPutsInvalidSignalsLast" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.001"/>
+  <testcase name="weakerSignalsProduceLargerDistances" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.0"/>
+  <testcase name="wifiGroupUsesTheStrongestAccessPointForItsEstimate" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.002"/>
+  <testcase name="bondedDeviceWithoutRssiHasNoDistanceButClassicDiscoveryCanSupplyOne" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.002"/>
+  <testcase name="absentOrInvalidSignalsNeverBecomeDistances" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.002"/>
+  <testcase name="bluetoothSortsClassicAndBleTogetherByDistanceWithUnknownLast" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.002"/>
+  <testcase name="newBleSignalUpdatesTheDistanceInsteadOfKeepingThePreviousEstimate" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.0"/>
+  <testcase name="invalidWifiSignalCannotHideAValidAccessPointInTheSameGroup" classname="dev.homesentinel.SignalDistanceEstimatorTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
