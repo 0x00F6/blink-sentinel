@@ -11,7 +11,7 @@ GIT_MAIN_REPO ?= https://github.com/0x00F6/blink-sentinel.git
 git_branch ?= $(GIT_BRANCH)
 git_remote ?= $(if $(GIT_REMOTE),$(GIT_REMOTE),origin)
 git_commit_message ?= $(if $(GIT_COMMIT_MESSAGE),$(GIT_COMMIT_MESSAGE),chore: publish Blink Sentinel project)
-export PUBLISH_GIT_REPO = $(if $(GIT_REPO),$(GIT_REPO),$(git_repo))
+export PUBLISH_GIT_REPO = $(if $(GIT_REPO),$(GIT_REPO),$(if $(GIT_MAIN_REPO),$(GIT_MAIN_REPO),$(git_repo)))
 export PUBLISH_GIT_BRANCH = $(git_branch)
 export PUBLISH_GIT_REMOTE = $(git_remote)
 export PUBLISH_COMMIT_MESSAGE = $(git_commit_message)
@@ -62,7 +62,8 @@ help:
 	printf '%b  🏷️  %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make release VERSION=0.1.0' '$(COLOR_RESET)' 'Build and publish a tagged APK release'
 	printf '%b  ❔ %-39s%b %s\n\n' '$(COLOR_SUCCESS)' 'make help' '$(COLOR_RESET)' 'Show this help'
 	printf '%b%s%b\n' '$(COLOR_WARN)' 'Example: make push GIT_REPO=OWNER/REPOSITORY GIT_BRANCH=main GIT_REMOTE=origin' '$(COLOR_RESET)'
-	printf '%b%s%b\n' '$(COLOR_WARN)' 'For a release, provide GIT_MAIN_REPO=OWNER/REPOSITORY; optional: GIT_COMMIT_MESSAGE="message".' '$(COLOR_RESET)'
+	printf '%b%s%b\n' '$(COLOR_WARN)' 'By default, push and release use GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git; GIT_REPO overrides it for push.' '$(COLOR_RESET)'
+	printf '%b%s%b\n' '$(COLOR_WARN)' 'Optional: GIT_BRANCH=main GIT_REMOTE=origin GIT_COMMIT_MESSAGE="message".' '$(COLOR_RESET)'
 	printf '%b%s%b\n' '$(COLOR_WARN)' 'Create an empty GitHub repository and authenticate with gh auth login first.' '$(COLOR_RESET)'
 
 test:

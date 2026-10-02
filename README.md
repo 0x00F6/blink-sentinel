@@ -114,7 +114,7 @@ make clean                                    # Remove Gradle build outputs
 make tasks                                    # List available Gradle tasks
 ```
 
-GitHub publishing is separate from local builds: `make push GIT_REPO=OWNER/REPOSITORY GIT_BRANCH=main` commits and pushes the selected branch. `make release VERSION=0.1.0` uses `GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git` by default, creates a GitHub release, and uploads its APK. Override the release destination with `GIT_MAIN_REPO=https://github.com/OWNER/REPOSITORY.git` when needed.
+GitHub publishing is separate from local builds: `make push GIT_BRANCH=main` commits and pushes the selected branch to `GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git` by default. Set `GIT_REPO=OWNER/REPOSITORY` to override the destination for a push. `make release VERSION=0.1.0` uses `GIT_MAIN_REPO` by default, creates a GitHub release, and uploads its APK. Override the release destination with `GIT_MAIN_REPO=https://github.com/OWNER/REPOSITORY.git` when needed.
 
 The same tasks can be run directly through the Gradle wrapper. Linux / macOS:
 
@@ -155,7 +155,7 @@ Alternatively, transfer the APK to your phone, open it from a file manager, and 
 
 ## GitHub publishing
 
-🚀 `Makefile` provides `make push GIT_REPO=OWNER/REPOSITORY GIT_BRANCH=main` to commit and push a branch, and `make release VERSION=0.1.0` to build a release APK and attach it to a GitHub release tagged `v0.1.0`. Releases default to `GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git`; override it with another GitHub repository URL when needed. Create an empty repository first, install and authenticate the GitHub CLI with `gh auth login`, and configure your Git author. These optional publishing targets require GNU Make and Bash; on Windows, the Gradle wrapper remains available directly. The Makefile and `.gitignore` keep local SDK paths and signing files out of Git; configure release signing locally before sharing an installable production APK. Run `make` or `make help` to view the commands.
+🚀 `Makefile` provides `make push GIT_BRANCH=main` to commit and push a branch to `GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git` by default. Pass `GIT_REPO=OWNER/REPOSITORY` to override the push destination. `make release VERSION=0.1.0` builds a release APK and attaches it to a GitHub release tagged `v0.1.0`, using `GIT_MAIN_REPO` as its destination. Create the repository first, install and authenticate the GitHub CLI with `gh auth login`, and configure your Git author. These optional publishing targets require GNU Make and Bash; on Windows, the Gradle wrapper remains available directly. The Makefile and `.gitignore` keep local SDK paths and signing files out of Git; configure release signing locally before sharing an installable production APK. Run `make` or `make help` to view the commands.
 
 ## Sensor selection and automatic activation
 
