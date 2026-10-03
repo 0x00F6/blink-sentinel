@@ -3,12 +3,15 @@ package dev.homesentinel
 import dev.homesentinel.domain.model.MonitorStatus
 import dev.homesentinel.domain.model.Presence
 import dev.homesentinel.domain.usecase.DepartureAlertPolicy
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DepartureAlertPolicyTest {
-    private fun status(presence: Presence, running: Boolean = true) =
-        MonitorStatus(running = running, presence = presence)
+    private fun status(
+        presence: Presence,
+        running: Boolean = true,
+    ) = MonitorStatus(running = running, presence = presence)
 
     @Test fun confirmedDepartureAlertsOnceAfterHome() {
         val policy = DepartureAlertPolicy()

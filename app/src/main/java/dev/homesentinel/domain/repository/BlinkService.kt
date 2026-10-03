@@ -1,13 +1,18 @@
 package dev.homesentinel.domain.repository
 
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.BlinkStatus
+import dev.homesentinel.domain.model.BlinkSystem
+import dev.homesentinel.domain.model.LoginResult
 import kotlinx.coroutines.flow.StateFlow
 
 interface BlinkService {
     val connected: StateFlow<Boolean>
     val status: StateFlow<BlinkStatus>
 
-    suspend fun login(email: String, password: String): LoginResult
+    suspend fun login(
+        email: String,
+        password: String,
+    ): LoginResult
 
     suspend fun verifyCode(code: String)
 

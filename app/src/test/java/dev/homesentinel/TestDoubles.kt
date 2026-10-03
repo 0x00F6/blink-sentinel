@@ -1,11 +1,19 @@
 package dev.homesentinel
 
 import dev.homesentinel.data.blink.SessionVault
-import dev.homesentinel.domain.model.*
-import dev.homesentinel.domain.repository.*
+import dev.homesentinel.domain.model.BlinkException
+import dev.homesentinel.domain.model.BlinkStatus
+import dev.homesentinel.domain.model.BlinkSystem
+import dev.homesentinel.domain.model.LoginResult
+import dev.homesentinel.domain.model.WifiEvidence
+import dev.homesentinel.domain.model.WifiNetwork
+import dev.homesentinel.domain.repository.BlinkService
+import dev.homesentinel.domain.repository.WifiScanner
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class MemoryVault(var text: String? = null) : SessionVault {
+class MemoryVault(
+    var text: String? = null,
+) : SessionVault {
     override suspend fun read() = text
 
     override suspend fun write(value: String) {
@@ -17,7 +25,9 @@ class MemoryVault(var text: String? = null) : SessionVault {
     }
 }
 
-class FakeBlink(initial: BlinkStatus = BlinkStatus.DISARMED) : BlinkService {
+class FakeBlink(
+    initial: BlinkStatus = BlinkStatus.DISARMED,
+) : BlinkService {
     override val connected = MutableStateFlow(true)
     override val status = MutableStateFlow(initial)
     var gets = 0
@@ -29,7 +39,10 @@ class FakeBlink(initial: BlinkStatus = BlinkStatus.DISARMED) : BlinkService {
     var lastGetSystem: String? = null
     var lastCommandSystem: String? = null
 
-    override suspend fun login(email: String, password: String) = LoginResult.CONNECTED
+    override suspend fun login(
+        email: String,
+        password: String,
+    ) = LoginResult.CONNECTED
 
     override suspend fun verifyCode(code: String) = Unit
 
@@ -42,8 +55,9 @@ class FakeBlink(initial: BlinkStatus = BlinkStatus.DISARMED) : BlinkService {
     override suspend fun getStatus(systemId: String?): BlinkStatus {
         lastGetSystem = systemId
         gets++
-        if (failuresLeft-- > 0)
+        if (failuresLeft-- > 0) {
             throw error ?: BlinkException(BlinkException.Kind.NETWORK, "Network unavailable")
+        }
         onGet?.invoke()
         return status.value
     }

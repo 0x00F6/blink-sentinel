@@ -20,7 +20,11 @@ enum class BlinkStatus {
     UNKNOWN,
 }
 
-data class BlinkSystem(val id: String, val name: String, val status: BlinkStatus)
+data class BlinkSystem(
+    val id: String,
+    val name: String,
+    val status: BlinkStatus,
+)
 
 data class WifiNetwork(
     val ssid: String,

@@ -5,12 +5,13 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
 }
 
-val releaseSigningValues = listOf(
-    providers.environmentVariable("BLINK_SENTINEL_JKS_FILE").orNull,
-    providers.environmentVariable("BLINK_SENTINEL_JKS_STORE_PASSWORD").orNull,
-    providers.environmentVariable("BLINK_SENTINEL_JKS_KEY_ALIAS").orNull,
-    providers.environmentVariable("BLINK_SENTINEL_JKS_KEY_PASSWORD").orNull,
-)
+val releaseSigningValues =
+    listOf(
+        providers.environmentVariable("BLINK_SENTINEL_JKS_FILE").orNull,
+        providers.environmentVariable("BLINK_SENTINEL_JKS_STORE_PASSWORD").orNull,
+        providers.environmentVariable("BLINK_SENTINEL_JKS_KEY_ALIAS").orNull,
+        providers.environmentVariable("BLINK_SENTINEL_JKS_KEY_PASSWORD").orNull,
+    )
 val releaseSigningConfigured = releaseSigningValues.all { !it.isNullOrBlank() }
 
 android {

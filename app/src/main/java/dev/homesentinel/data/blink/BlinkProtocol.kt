@@ -1,10 +1,12 @@
 package dev.homesentinel.data.blink
 
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.BlinkException
+import dev.homesentinel.domain.model.BlinkStatus
+import dev.homesentinel.domain.model.BlinkSystem
+import org.json.JSONObject
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
-import org.json.JSONObject
 
 object BlinkProtocol {
     fun pkce(): Pair<String, String> {
@@ -12,7 +14,7 @@ object BlinkProtocol {
         val verifier = encode.encodeToString(ByteArray(32).also { SecureRandom().nextBytes(it) })
         return verifier to
             encode.encodeToString(
-                MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII))
+                MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)),
             )
     }
 
@@ -29,10 +31,9 @@ object BlinkProtocol {
     fun csrf(html: String): String {
         val script =
             Regex(
-                    "<script\\b(?=[^>]*\\bid=[\"']oauth-args[\"'])[^>]*>(.*?)</script>",
-                    RegexOption.DOT_MATCHES_ALL,
-                )
-                .find(html)
+                "<script\\b(?=[^>]*\\bid=[\"']oauth-args[\"'])[^>]*>(.*?)</script>",
+                RegexOption.DOT_MATCHES_ALL,
+            ).find(html)
                 ?.groupValues
                 ?.get(1)
                 ?: throw BlinkException(
@@ -46,7 +47,10 @@ object BlinkProtocol {
             )
     }
 
-    fun twoFactor(code: Int, body: String): Boolean {
+    fun twoFactor(
+        code: Int,
+        body: String,
+    ): Boolean {
         if (code == 412) return true
         if (code != 202) return false
         val j =
@@ -82,7 +86,8 @@ object BlinkProtocol {
 
     fun id(value: Any?): String =
         value.toString().also {
-            if (!it.matches(Regex("[0-9]+")))
+            if (!it.matches(Regex("[0-9]+"))) {
                 throw BlinkException(BlinkException.Kind.PROTOCOL, "Invalid Blink identifier")
+            }
         }
 }

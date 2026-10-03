@@ -7,12 +7,15 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.wifi.WifiManager
 import android.os.SystemClock
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.WifiEvidence
+import dev.homesentinel.domain.model.WifiNetwork
 import dev.homesentinel.domain.repository.WifiScanner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class AndroidWifiScanner(private val context: Context) : WifiScanner {
+class AndroidWifiScanner(
+    private val context: Context,
+) : WifiScanner {
     private val wifi = context.applicationContext.getSystemService(WifiManager::class.java)
     private val location = context.getSystemService(LocationManager::class.java)
     private val mutableNetworks = MutableStateFlow<List<WifiNetwork>>(emptyList())
@@ -20,7 +23,9 @@ class AndroidWifiScanner(private val context: Context) : WifiScanner {
 
     override fun available() =
         context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED && location.isLocationEnabled && wifi.isWifiEnabled
+            PackageManager.PERMISSION_GRANTED &&
+            location.isLocationEnabled &&
+            wifi.isWifiEnabled
 
     @Suppress("DEPRECATION")
     @SuppressLint("MissingPermission")
@@ -63,13 +68,15 @@ class AndroidWifiScanner(private val context: Context) : WifiScanner {
             mutableNetworks.value = emptyList()
             return
         }
-        mutableNetworks.value = try {
-            val points = wifi.scanResults.map {
-                ScanAccessPoint(it.SSID, it.timestamp / 1_000L, it.level)
+        mutableNetworks.value =
+            try {
+                val points =
+                    wifi.scanResults.map {
+                        ScanAccessPoint(it.SSID, it.timestamp / 1_000L, it.level)
+                    }
+                ScanPolicy.freshNetworks(points, SystemClock.elapsedRealtime())
+            } catch (_: SecurityException) {
+                emptyList()
             }
-            ScanPolicy.freshNetworks(points, SystemClock.elapsedRealtime())
-        } catch (_: SecurityException) {
-            emptyList()
-        }
     }
 }

@@ -6,11 +6,23 @@ import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.homesentinel.AppGraph
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.BlinkException
+import dev.homesentinel.domain.model.BlinkStatus
+import dev.homesentinel.domain.model.BlinkSystem
+import dev.homesentinel.domain.model.BluetoothDeviceItem
+import dev.homesentinel.domain.model.LogType
+import dev.homesentinel.domain.model.LoginResult
+import dev.homesentinel.domain.model.MonitoringMode
+import dev.homesentinel.domain.model.Settings
 import dev.homesentinel.domain.usecase.ActivateMonitoring
 import dev.homesentinel.service.WifiMonitorService
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class PermissionState(
     val precise: Boolean = false,
@@ -22,7 +34,10 @@ data class PermissionState(
     val bluetoothAvailable: Boolean = false,
 )
 
-class SentinelViewModel(private val app: Application, val graph: AppGraph) : ViewModel() {
+class SentinelViewModel(
+    private val app: Application,
+    val graph: AppGraph,
+) : ViewModel() {
     private val monitorIntent = Intent(app, WifiMonitorService::class.java)
     val settings =
         graph.settings.settings.stateIn(viewModelScope, SharingStarted.Eagerly, Settings())
@@ -59,7 +74,9 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
                 throw e
             } catch (e: BlinkException) {
                 graph.logs.addError(e.message ?: "Blink error", e, operation = "Blink user action")
-                message.value = dev.homesentinel.data.preferences.EventLog.sanitizeSecrets(e.message.orEmpty())
+                message.value =
+                    dev.homesentinel.data.preferences.EventLog
+                        .sanitizeSecrets(e.message.orEmpty())
             } catch (e: IllegalArgumentException) {
                 graph.logs.addError(e.message ?: "Invalid setting", e, "Settings validation")
                 message.value = e.message ?: "Invalid setting"
@@ -88,7 +105,10 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
         selectSensor { it.copy(mode = MonitoringMode.WIFI, homeSsid = ssid) }
     }
 
-    fun login(email: String, password: String) {
+    fun login(
+        email: String,
+        password: String,
+    ) {
         runAction {
             graph.ready.await()
             graph.settings.update { it.copy(enabled = false) }
@@ -97,9 +117,10 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
             if (!twoFactor.value) {
                 loadSystems()
                 graph.logs.add("Blink account connected", type = LogType.ACCOUNT)
-            } else
+            } else {
                 message.value =
                     "Enter the code sent by Blink. Your password is not stored."
+            }
         }
     }
 
@@ -138,7 +159,13 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
             val one = available.single()
             graph.settings.update { it.copy(systemId = one.id, systemName = one.name) }
         }
-        if (graph.settings.snapshot().systemId.isNotBlank()) graph.blink.getStatus()
+        if (graph.settings
+                .snapshot()
+                .systemId
+                .isNotBlank()
+        ) {
+            graph.blink.getStatus()
+        }
     }
 
     fun refreshSystems() {
@@ -161,8 +188,11 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
             val changed = graph.ensure(desired)
             val word = if (desired == BlinkStatus.ARMED) "armed" else "disarmed"
             graph.logs.add(
-                if (changed) "Blink system $word — manual action"
-                else "Blink already $word — no command sent",
+                if (changed) {
+                    "Blink system $word — manual action"
+                } else {
+                    "Blink already $word — no command sent"
+                },
                 type = if (desired == BlinkStatus.ARMED) LogType.BLINK_ARMED else LogType.BLINK_DISARMED,
             )
             message.value = if (changed) "Blink state confirmed" else "Blink is already in this state"
@@ -170,8 +200,11 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
     }
 
     private fun sensorAvailable(config: Settings) =
-        if (config.mode == MonitoringMode.WIFI) graph.scanner.available()
-        else graph.bluetoothScanner.available()
+        if (config.mode == MonitoringMode.WIFI) {
+            graph.scanner.available()
+        } else {
+            graph.bluetoothScanner.available()
+        }
 
     fun chooseMode(mode: MonitoringMode) {
         runAction {
@@ -215,9 +248,12 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
     fun onWifiScanResult(success: Boolean) {
         if (success) {
             graph.scanner.readSuccessfulScan(settings.value.homeSsid)
-            wifiSearchMessage.value = if (networks.value.isEmpty())
-                "Scan received: no recent named networks. Move closer to the access point and try again."
-            else "Recent networks detected: ${networks.value.size}."
+            wifiSearchMessage.value =
+                if (networks.value.isEmpty()) {
+                    "Scan received: no recent named networks. Move closer to the access point and try again."
+                } else {
+                    "Recent networks detected: ${networks.value.size}."
+                }
         } else {
             // Refresh display only: a failed broadcast never produces presence evidence.
             graph.scanner.refreshNetworks()
@@ -234,24 +270,28 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
         }
         lastWifiRequestAt = SystemClock.elapsedRealtime()
         wifiSearchMessage.value =
-            if (graph.scanner.requestScan()) "Scan requested: waiting for Android results. Available recent results are shown."
-            else "Android refused the scan. Recent results remain visible; wait and try again."
+            if (graph.scanner.requestScan()) {
+                "Scan requested: waiting for Android results. Available recent results are shown."
+            } else {
+                "Android refused the scan. Recent results remain visible; wait and try again."
+            }
     }
 
-    private val activateMonitoring = ActivateMonitoring(
-        snapshot = graph.settings::snapshot,
-        update = graph.settings::update,
-        connected = { connected.value },
-        sensorAvailable = ::sensorAvailable,
-        startService = {
-            app.startForegroundService(Intent(app, WifiMonitorService::class.java))
-            Unit
-        },
-        stopService = {
-            app.stopService(monitorIntent)
-            Unit
-        },
-    )
+    private val activateMonitoring =
+        ActivateMonitoring(
+            snapshot = graph.settings::snapshot,
+            update = graph.settings::update,
+            connected = { connected.value },
+            sensorAvailable = ::sensorAvailable,
+            startService = {
+                app.startForegroundService(Intent(app, WifiMonitorService::class.java))
+                Unit
+            },
+            stopService = {
+                app.stopService(monitorIntent)
+                Unit
+            },
+        )
 
     private fun selectSensor(selection: (Settings) -> Settings) {
         runAction {
@@ -299,8 +339,8 @@ class SentinelViewModel(private val app: Application, val graph: AppGraph) : Vie
             graph.ready.await()
             if (
                 graph.settings.snapshot().enabled &&
-                    !monitor.value.running &&
-                    sensorAvailable(graph.settings.snapshot())
+                !monitor.value.running &&
+                sensorAvailable(graph.settings.snapshot())
             ) {
                 try {
                     app.startForegroundService(Intent(app, WifiMonitorService::class.java))

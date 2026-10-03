@@ -1,7 +1,14 @@
 package dev.homesentinel.ui.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -18,15 +25,19 @@ import androidx.compose.ui.unit.dp
 import dev.homesentinel.R
 
 @Composable
-fun TerminalNavigation(selectedTab: Int, onSelect: (Int) -> Unit) {
+fun TerminalNavigation(
+    selectedTab: Int,
+    onSelect: (Int) -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     val separator = colors.outlineVariant
     Surface(
         color = colors.surfaceContainerLowest,
-        modifier = Modifier.drawWithContent {
-            drawContent()
-            drawLine(separator, Offset.Zero, Offset(size.width, 0f), strokeWidth = 1.dp.toPx())
-        },
+        modifier =
+            Modifier.drawWithContent {
+                drawContent()
+                drawLine(separator, Offset.Zero, Offset(size.width, 0f), strokeWidth = 1.dp.toPx())
+            },
     ) {
         Row(
             Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 12.dp, vertical = 10.dp),

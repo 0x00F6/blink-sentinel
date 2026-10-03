@@ -1,9 +1,22 @@
 package dev.homesentinel.service
 
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.BlinkException
+import dev.homesentinel.domain.model.BlinkStatus
+import dev.homesentinel.domain.model.LogType
+import dev.homesentinel.domain.model.MonitorStatus
+import dev.homesentinel.domain.model.Presence
+import dev.homesentinel.domain.model.Settings
+import dev.homesentinel.domain.model.WifiEvidence
 import dev.homesentinel.domain.repository.WifiScanner
-import dev.homesentinel.domain.usecase.*
-import kotlinx.coroutines.*
+import dev.homesentinel.domain.usecase.EnsureBlinkState
+import dev.homesentinel.domain.usecase.PresenceMachine
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * Coroutine coordinator. Methods run on the service's main dispatcher. Network jobs are cancellable
@@ -63,9 +76,11 @@ class BlinkAutomationService(
         machine.observe(evidence, settings, observedNow)
         if (machine.lastObservation == beforeObservation) return
         evidence.signalAt?.let { signalAt ->
-            if (evidence.present && signalAt <= evidence.observedAt &&
+            if (evidence.present &&
+                signalAt <= evidence.observedAt &&
                 observedNow - signalAt in 0..PresenceMachine.MAX_AGE_MS &&
-                (lastSignalMono == null || signalAt > lastSignalMono!!)) {
+                (lastSignalMono == null || signalAt > lastSignalMono!!)
+            ) {
                 lastSignalMono = signalAt
                 lastSignalWall = wallNow() - (observedNow - signalAt)
             }
@@ -89,7 +104,7 @@ class BlinkAutomationService(
             scope.launch {
                 delay(
                     (machine.lastObservation!! + PresenceMachine.STALE_AFTER_MS - now())
-                        .coerceAtLeast(0)
+                        .coerceAtLeast(0),
                 )
                 if (machine.expire(now())) {
                     cancelAction()
@@ -104,7 +119,7 @@ class BlinkAutomationService(
                 Presence.AWAY_PENDING -> "Confirming absence"
                 Presence.AWAY -> "Home sensor absence confirmed"
                 Presence.UNKNOWN -> "Waiting for a valid scan"
-            }
+            },
         )
     }
 
@@ -172,10 +187,11 @@ class BlinkAutomationService(
                         if (validAction(generation, wanted, expectedSettings)) {
                             satisfied = wanted
                             log(
-                                if (changed)
+                                if (changed) {
                                     "Blink system ${if (wanted == BlinkStatus.ARMED) "armed" else "disarmed"}"
-                                else
-                                    "Blink already ${if (wanted == BlinkStatus.ARMED) "armed" else "disarmed"} — no command sent",
+                                } else {
+                                    "Blink already ${if (wanted == BlinkStatus.ARMED) "armed" else "disarmed"} — no command sent"
+                                },
                                 if (wanted == BlinkStatus.ARMED) LogType.BLINK_ARMED else LogType.BLINK_DISARMED,
                             )
                         }
@@ -186,9 +202,10 @@ class BlinkAutomationService(
                         logError("Blink command failed: ${e.message}", e)
                         if (
                             e.kind == BlinkException.Kind.AUTH ||
-                                e.kind == BlinkException.Kind.PROTOCOL
-                        )
+                            e.kind == BlinkException.Kind.PROTOCOL
+                        ) {
                             return@launch
+                        }
                         if (e.kind == BlinkException.Kind.RATE_LIMIT) return@launch
                     } catch (e: Exception) {
                         logError("Blink command failed: ${e.message}", e)
@@ -198,8 +215,7 @@ class BlinkAutomationService(
             }
     }
 
-    private fun fresh(): Boolean =
-        machine.lastObservation?.let { now() - it <= PresenceMachine.MAX_AGE_MS } == true
+    private fun fresh(): Boolean = machine.lastObservation?.let { now() - it <= PresenceMachine.MAX_AGE_MS } == true
 
     private suspend fun validAction(
         generation: Long,
@@ -219,11 +235,17 @@ class BlinkAutomationService(
     }
 
     private fun publishState(note: String) {
-        publish(MonitorStatus(
-            true, machine.state, machine.deadline, machine.lastObservation, note,
-            lastSignalAtEpochMillis = lastSignalWall,
-            lastSignalSource = settings.signalSourceKey,
-        ))
+        publish(
+            MonitorStatus(
+                true,
+                machine.state,
+                machine.deadline,
+                machine.lastObservation,
+                note,
+                lastSignalAtEpochMillis = lastSignalWall,
+                lastSignalSource = settings.signalSourceKey,
+            ),
+        )
     }
 
     fun close() {

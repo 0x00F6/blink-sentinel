@@ -4,13 +4,31 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -23,47 +41,54 @@ import dev.homesentinel.domain.model.LogEntry
 import dev.homesentinel.domain.model.LogRetention
 import dev.homesentinel.domain.model.LogType
 
-private fun LogType.label(): String = when (this) {
-    LogType.INFO -> "Information"
-    LogType.SIGNAL_DETECTED -> "Signal detected"
-    LogType.SIGNAL_LOST -> "Signal not detected"
-    LogType.ABSENCE_CONFIRMED -> "Absence confirmed"
-    LogType.SIGNAL_UNKNOWN -> "Signal unknown"
-    LogType.WAITING_CONFIRMATION -> "Awaiting confirmation"
-    LogType.MONITORING_STARTED -> "Monitoring started"
-    LogType.MONITORING_STOPPED -> "Monitoring stopped"
-    LogType.BLINK_ARMED -> "Blink armed"
-    LogType.BLINK_DISARMED -> "Blink disarmed"
-    LogType.ACCOUNT -> "Blink account"
-    LogType.ERROR -> "Error"
-}
+private fun LogType.label(): String =
+    when (this) {
+        LogType.INFO -> "Information"
+        LogType.SIGNAL_DETECTED -> "Signal detected"
+        LogType.SIGNAL_LOST -> "Signal not detected"
+        LogType.ABSENCE_CONFIRMED -> "Absence confirmed"
+        LogType.SIGNAL_UNKNOWN -> "Signal unknown"
+        LogType.WAITING_CONFIRMATION -> "Awaiting confirmation"
+        LogType.MONITORING_STARTED -> "Monitoring started"
+        LogType.MONITORING_STOPPED -> "Monitoring stopped"
+        LogType.BLINK_ARMED -> "Blink armed"
+        LogType.BLINK_DISARMED -> "Blink disarmed"
+        LogType.ACCOUNT -> "Blink account"
+        LogType.ERROR -> "Error"
+    }
 
-private fun LogType.icon(): Int = when (this) {
-    LogType.INFO -> R.drawable.ic_log_info
-    LogType.SIGNAL_DETECTED -> R.drawable.ic_network
-    LogType.SIGNAL_LOST -> R.drawable.ic_signal_lost
-    LogType.ABSENCE_CONFIRMED -> R.drawable.ic_home_away
-    LogType.SIGNAL_UNKNOWN -> R.drawable.ic_signal_unknown
-    LogType.WAITING_CONFIRMATION -> R.drawable.ic_log_clock
-    LogType.MONITORING_STARTED -> R.drawable.ic_log_play
-    LogType.MONITORING_STOPPED -> R.drawable.ic_log_stop
-    LogType.BLINK_ARMED -> R.drawable.ic_log_lock
-    LogType.BLINK_DISARMED -> R.drawable.ic_log_unlock
-    LogType.ACCOUNT -> R.drawable.ic_log_account
-    LogType.ERROR -> R.drawable.ic_log_error
-}
+private fun LogType.icon(): Int =
+    when (this) {
+        LogType.INFO -> R.drawable.ic_log_info
+        LogType.SIGNAL_DETECTED -> R.drawable.ic_network
+        LogType.SIGNAL_LOST -> R.drawable.ic_signal_lost
+        LogType.ABSENCE_CONFIRMED -> R.drawable.ic_home_away
+        LogType.SIGNAL_UNKNOWN -> R.drawable.ic_signal_unknown
+        LogType.WAITING_CONFIRMATION -> R.drawable.ic_log_clock
+        LogType.MONITORING_STARTED -> R.drawable.ic_log_play
+        LogType.MONITORING_STOPPED -> R.drawable.ic_log_stop
+        LogType.BLINK_ARMED -> R.drawable.ic_log_lock
+        LogType.BLINK_DISARMED -> R.drawable.ic_log_unlock
+        LogType.ACCOUNT -> R.drawable.ic_log_account
+        LogType.ERROR -> R.drawable.ic_log_error
+    }
 
 @Composable
-fun EventLogCard(entry: LogEntry, date: String, onDetails: () -> Unit) {
+fun EventLogCard(
+    entry: LogEntry,
+    date: String,
+    onDetails: () -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     val type = if (entry.isError) LogType.ERROR else entry.type
-    val accent = when (type) {
-        LogType.ERROR -> colors.error
-        LogType.SIGNAL_LOST, LogType.ABSENCE_CONFIRMED, LogType.WAITING_CONFIRMATION -> colors.tertiary
-        LogType.SIGNAL_UNKNOWN -> colors.secondary
-        LogType.MONITORING_STOPPED, LogType.INFO -> colors.onSurfaceVariant
-        else -> colors.primary
-    }
+    val accent =
+        when (type) {
+            LogType.ERROR -> colors.error
+            LogType.SIGNAL_LOST, LogType.ABSENCE_CONFIRMED, LogType.WAITING_CONFIRMATION -> colors.tertiary
+            LogType.SIGNAL_UNKNOWN -> colors.secondary
+            LogType.MONITORING_STOPPED, LogType.INFO -> colors.onSurfaceVariant
+            else -> colors.primary
+        }
     Card(
         modifier = Modifier.fillMaxWidth().clickable(enabled = entry.isError, onClick = onDetails),
         shape = MaterialTheme.shapes.large,
@@ -91,7 +116,11 @@ fun EventLogCard(entry: LogEntry, date: String, onDetails: () -> Unit) {
 }
 
 @Composable
-fun LogRetentionDialog(current: Int, onSave: (Int) -> Unit, onDismiss: () -> Unit) {
+fun LogRetentionDialog(
+    current: Int,
+    onSave: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
     var input by remember(current) { mutableStateOf(current.toString()) }
     val value = input.toIntOrNull()
     val valid = value != null && value in LogRetention.MIN..LogRetention.MAX
@@ -124,14 +153,21 @@ fun LogRetentionDialog(current: Int, onSave: (Int) -> Unit, onDismiss: () -> Uni
 }
 
 @Composable
-fun LogErrorDialog(entry: LogEntry, date: String, onDismiss: () -> Unit) {
+fun LogErrorDialog(
+    entry: LogEntry,
+    date: String,
+    onDismiss: () -> Unit,
+) {
     val clipboard = LocalContext.current.getSystemService(ClipboardManager::class.java)
     val details = entry.errorDetails
-    val text = "Date: $date\n${entry.message}\n\n" + (details?.let {
-        "Operation: ${it.operation}\nHTTP method: ${it.httpMethod}\nURL: ${it.url}\nHTTP status: ${it.httpStatus}" +
-            "\nType: ${it.exceptionType}\nMessage: ${it.exceptionMessage}\nCauses:\n${it.causes}" +
-            "\n\nFull stack trace:\n${it.stackTrace}"
-    } ?: "No technical details available for this older event")
+    val text =
+        "Date: $date\n${entry.message}\n\n" + (
+            details?.let {
+                "Operation: ${it.operation}\nHTTP method: ${it.httpMethod}\nURL: ${it.url}\nHTTP status: ${it.httpStatus}" +
+                    "\nType: ${it.exceptionType}\nMessage: ${it.exceptionMessage}\nCauses:\n${it.causes}" +
+                    "\n\nFull stack trace:\n${it.stackTrace}"
+            } ?: "No technical details available for this older event"
+        )
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {

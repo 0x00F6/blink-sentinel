@@ -1,6 +1,7 @@
 package dev.homesentinel.domain.usecase
 
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.BlinkException
+import dev.homesentinel.domain.model.BlinkStatus
 import dev.homesentinel.domain.repository.BlinkService
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -25,11 +26,12 @@ class EnsureBlinkState(
             if (!stillWanted()) return@withLock false
             if (current == desired) return@withLock false
             // UNKNOWN from an unreadable server response is not permission to change it.
-            if (current == BlinkStatus.UNKNOWN)
+            if (current == BlinkStatus.UNKNOWN) {
                 throw BlinkException(
                     BlinkException.Kind.PROTOCOL,
                     "Blink state unknown: action deferred",
                 )
+            }
             if (desired == BlinkStatus.ARMED) blink.arm(target) else blink.disarm(target)
             true
         }

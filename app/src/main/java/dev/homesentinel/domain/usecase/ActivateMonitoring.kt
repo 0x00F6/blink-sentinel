@@ -16,17 +16,20 @@ class ActivateMonitoring(
         // Persist the target first so startup validation and the service read the same selection.
         if (selection != null) update(selection)
         val config = snapshot()
-        val problem = when {
-            (if (config.mode == MonitoringMode.WIFI) config.homeSsid else config.bluetoothDeviceAddress).isBlank() ->
-                "Select a home sensor in the Network tab"
-            !connected() || config.systemId.isBlank() ->
-                "Sensor saved. Sign in to Blink and select a system to enable monitoring."
-            !sensorAvailable(config) ->
-                if (config.mode == MonitoringMode.WIFI)
-                    "Sensor saved. Grant precise location permission and enable Wi-Fi and Android Location to start monitoring."
-                else "Sensor saved. Android 12+, Nearby devices permission, and Bluetooth enabled are required to start monitoring."
-            else -> null
-        }
+        val problem =
+            when {
+                (if (config.mode == MonitoringMode.WIFI) config.homeSsid else config.bluetoothDeviceAddress).isBlank() ->
+                    "Select a home sensor in the Network tab"
+                !connected() || config.systemId.isBlank() ->
+                    "Sensor saved. Sign in to Blink and select a system to enable monitoring."
+                !sensorAvailable(config) ->
+                    if (config.mode == MonitoringMode.WIFI) {
+                        "Sensor saved. Grant precise location permission and enable Wi-Fi and Android Location to start monitoring."
+                    } else {
+                        "Sensor saved. Android 12+, Nearby devices permission, and Bluetooth enabled are required to start monitoring."
+                    }
+                else -> null
+            }
         if (problem != null) {
             update { it.copy(enabled = false) }
             stopService()

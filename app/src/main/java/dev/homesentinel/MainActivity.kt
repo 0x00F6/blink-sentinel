@@ -6,7 +6,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.wifi.WifiManager
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -19,7 +21,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import dev.homesentinel.domain.model.MonitoringMode
 import dev.homesentinel.receiver.WifiScanReceiver
-import dev.homesentinel.ui.*
+import dev.homesentinel.ui.PermissionState
+import dev.homesentinel.ui.SentinelViewModel
 import dev.homesentinel.ui.screens.SentinelApp
 
 class MainActivity : ComponentActivity() {
@@ -29,8 +32,7 @@ class MainActivity : ComponentActivity() {
     private val model: SentinelViewModel by viewModels {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                SentinelViewModel(application, graph) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = SentinelViewModel(application, graph) as T
         }
     }
     private val permissionRequest =
@@ -41,9 +43,10 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             updatePermissions()
         }
-    private val scanReceiver = WifiScanReceiver { success ->
-        model.onWifiScanResult(success)
-    }
+    private val scanReceiver =
+        WifiScanReceiver { success ->
+            model.onWifiScanResult(success)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,8 +84,7 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
-    private fun granted(permission: String) =
-        checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+    private fun granted(permission: String) = checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
     private fun updatePermissions() {
         model.permissions.value =
@@ -112,10 +114,14 @@ class MainActivity : ComponentActivity() {
             needed.add(Manifest.permission.ACCESS_COARSE_LOCATION)
             needed.add(Manifest.permission.ACCESS_FINE_LOCATION)
         }
-        if (Build.VERSION.SDK_INT >= 33 && !granted(Manifest.permission.POST_NOTIFICATIONS))
+        if (Build.VERSION.SDK_INT >= 33 && !granted(Manifest.permission.POST_NOTIFICATIONS)) {
             needed.add(Manifest.permission.POST_NOTIFICATIONS)
-        if (needed.isNotEmpty()) permissionRequest.launch(needed.toTypedArray())
-        else model.message.value = "All required permissions have already been granted"
+        }
+        if (needed.isNotEmpty()) {
+            permissionRequest.launch(needed.toTypedArray())
+        } else {
+            model.message.value = "All required permissions have already been granted"
+        }
     }
 
     private fun requestBootAccess() {
@@ -123,9 +129,11 @@ class MainActivity : ComponentActivity() {
             requestAccess()
             return
         }
-        if (Build.VERSION.SDK_INT == 29)
+        if (Build.VERSION.SDK_INT == 29) {
             backgroundRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        else openAppSettings()
+        } else {
+            openAppSettings()
+        }
     }
 
     private fun openLocation() {
@@ -134,22 +142,26 @@ class MainActivity : ComponentActivity() {
 
     private fun openAppSettings() {
         startActivity(
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri())
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
         )
     }
 
     private fun openBatterySettings() {
-        val exempt = getSystemService(PowerManager::class.java)
-            .isIgnoringBatteryOptimizations(packageName)
-        val destinations = buildList {
-            // Android owns the exemption: ask only on a user tap, never silently or on startup.
-            if (!exempt) add(
-                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, "package:$packageName".toUri())
-            )
-            // Some manufacturers omit the direct request activity. Keep standard settings fallbacks.
-            add(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-            add(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()))
-        }
+        val exempt =
+            getSystemService(PowerManager::class.java)
+                .isIgnoringBatteryOptimizations(packageName)
+        val destinations =
+            buildList {
+                // Android owns the exemption: ask only on a user tap, never silently or on startup.
+                if (!exempt) {
+                    add(
+                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, "package:$packageName".toUri()),
+                    )
+                }
+                // Some manufacturers omit the direct request activity. Keep standard settings fallbacks.
+                add(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                add(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()))
+            }
         var failure: RuntimeException? = null
         for (destination in destinations) {
             try {

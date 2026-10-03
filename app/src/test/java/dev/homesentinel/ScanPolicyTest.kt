@@ -1,7 +1,11 @@
 package dev.homesentinel
 
-import dev.homesentinel.data.wifi.*
-import org.junit.Assert.*
+import dev.homesentinel.data.wifi.ScanAccessPoint
+import dev.homesentinel.data.wifi.ScanPolicy
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ScanPolicyTest {
@@ -13,11 +17,12 @@ class ScanPolicyTest {
 
     @Test
     fun selectionListRejectsOldAndFutureResultsIndividually() {
-        val points = listOf(
-            ScanAccessPoint("Old", 9_999, -30),
-            ScanAccessPoint("Future", 70_001, -30),
-            ScanAccessPoint("Fresh", 70_000, -60),
-        )
+        val points =
+            listOf(
+                ScanAccessPoint("Old", 9_999, -30),
+                ScanAccessPoint("Future", 70_001, -30),
+                ScanAccessPoint("Fresh", 70_000, -60),
+            )
         assertEquals(listOf("Fresh"), ScanPolicy.freshNetworks(points, 70_000).map { it.ssid })
     }
 
@@ -30,10 +35,15 @@ class ScanPolicyTest {
 
     @Test
     fun signalTimestampBelongsToTheSelectedSsidAndNeverToAnotherAccessPoint() {
-        val evidence = ScanPolicy.evidence(listOf(
-            ScanAccessPoint("Home", 9_000, -50),
-            ScanAccessPoint("Other", 10_000, -40),
-        ), "Home", 10_000)!!
+        val evidence =
+            ScanPolicy.evidence(
+                listOf(
+                    ScanAccessPoint("Home", 9_000, -50),
+                    ScanAccessPoint("Other", 10_000, -40),
+                ),
+                "Home",
+                10_000,
+            )!!
         assertEquals(10_000L, evidence.observedAt)
         assertEquals(9_000L, evidence.signalAt)
         assertNull(ScanPolicy.evidence(listOf(ScanAccessPoint("Other", 10_000, -40)), "Home", 10_000)!!.signalAt)
@@ -49,22 +59,24 @@ class ScanPolicyTest {
     @Test
     fun absentHomeInFreshResultsIsValidEvidence() {
         assertFalse(
-            ScanPolicy.evidence(listOf(ScanAccessPoint("Other", 10_000, -50)), "Home", 10_000)!!
-                .present
+            ScanPolicy
+                .evidence(listOf(ScanAccessPoint("Other", 10_000, -50)), "Home", 10_000)!!
+                .present,
         )
     }
 
     @Test
     fun whollyStaleResultsAreIgnored() {
         assertNull(
-            ScanPolicy.evidence(listOf(ScanAccessPoint("Other", 1_000, -50)), "Home", 61_001)
+            ScanPolicy.evidence(listOf(ScanAccessPoint("Other", 1_000, -50)), "Home", 61_001),
         )
     }
 
     @Test
     fun cachedHomeAmongNewResultsDoesNotCountAsPresence() {
         assertFalse(
-            ScanPolicy.evidence(
+            ScanPolicy
+                .evidence(
                     listOf(
                         ScanAccessPoint("Home", 0, -50),
                         ScanAccessPoint("Other", 70_000, -60),
@@ -72,14 +84,14 @@ class ScanPolicyTest {
                     "Home",
                     70_000,
                 )!!
-                .present
+                .present,
         )
     }
 
     @Test
     fun ssidComparisonIsCaseSensitive() {
         assertFalse(
-            ScanPolicy.evidence(listOf(ScanAccessPoint("HOME", 0, -40)), "Home", 0)!!.present
+            ScanPolicy.evidence(listOf(ScanAccessPoint("HOME", 0, -40)), "Home", 0)!!.present,
         )
     }
 
@@ -96,7 +108,7 @@ class ScanPolicyTest {
                     ScanAccessPoint("Home", 0, -70),
                     ScanAccessPoint("Home", 0, -40),
                     ScanAccessPoint("", 0, -30),
-                )
+                ),
             )
         assertEquals(1, list.size)
         assertEquals(2, list.single().accessPoints)

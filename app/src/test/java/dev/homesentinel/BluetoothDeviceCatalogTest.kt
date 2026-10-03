@@ -1,7 +1,9 @@
 package dev.homesentinel
 
 import dev.homesentinel.data.bluetooth.BluetoothDeviceCatalog
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BluetoothDeviceCatalogTest {
@@ -42,6 +44,7 @@ class BluetoothDeviceCatalogTest {
         assertTrue(catalog.items().single().bonded)
         assertTrue(catalog.items().single().bleObserved)
     }
+
     @Test fun expiredDevicesDisappearAndFreshDetectionMakesThemVisibleAgain() {
         var time = 0L
         val catalog = BluetoothDeviceCatalog { time }

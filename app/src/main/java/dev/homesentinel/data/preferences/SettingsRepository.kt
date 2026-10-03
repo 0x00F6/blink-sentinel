@@ -2,19 +2,26 @@ package dev.homesentinel.data.preferences
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import dev.homesentinel.domain.model.MonitoringMode
 import dev.homesentinel.domain.model.AppThemeMode
 import dev.homesentinel.domain.model.LogRetention
+import dev.homesentinel.domain.model.MonitoringMode
 import dev.homesentinel.domain.model.Settings
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.settingsStore by preferencesDataStore("automation")
 
-class SettingsRepository internal constructor(private val store: DataStore<Preferences>) {
+class SettingsRepository internal constructor(
+    private val store: DataStore<Preferences>,
+) {
     constructor(context: Context) : this(context.settingsStore)
+
     private val enabled = booleanPreferencesKey("enabled")
     private val mode = stringPreferencesKey("mode")
     private val ssid = stringPreferencesKey("ssid")
@@ -30,17 +37,19 @@ class SettingsRepository internal constructor(private val store: DataStore<Prefe
 
     private fun decode(p: Preferences) =
         Settings(
-            themeMode = try {
-                AppThemeMode.valueOf(p[themeMode] ?: AppThemeMode.DARK.name)
-            } catch (_: Exception) {
-                AppThemeMode.DARK
-            },
+            themeMode =
+                try {
+                    AppThemeMode.valueOf(p[themeMode] ?: AppThemeMode.DARK.name)
+                } catch (_: Exception) {
+                    AppThemeMode.DARK
+                },
             enabled = p[enabled] ?: false,
-            mode = try {
-                MonitoringMode.valueOf(p[mode] ?: "WIFI")
-            } catch (_: Exception) {
-                MonitoringMode.WIFI
-            },
+            mode =
+                try {
+                    MonitoringMode.valueOf(p[mode] ?: "WIFI")
+                } catch (_: Exception) {
+                    MonitoringMode.WIFI
+                },
             homeSsid = p[ssid] ?: "",
             bluetoothDeviceAddress = p[btAddress] ?: "",
             bluetoothDeviceName = p[btName] ?: "",

@@ -4,7 +4,9 @@ import dev.homesentinel.data.bluetooth.BluetoothDeviceCatalog
 import dev.homesentinel.data.wifi.ScanAccessPoint
 import dev.homesentinel.data.wifi.ScanPolicy
 import dev.homesentinel.domain.usecase.SignalDistanceEstimator
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SignalDistanceEstimatorTest {
@@ -19,18 +21,26 @@ class SignalDistanceEstimatorTest {
     }
 
     @Test fun wifiSortsByDistanceAndPutsInvalidSignalsLast() {
-        val networks = ScanPolicy.networks(listOf(
-            ScanAccessPoint("Far", 10, -80),
-            ScanAccessPoint("Unknown", 10, 0),
-            ScanAccessPoint("Near", 10, -40),
-        ))
+        val networks =
+            ScanPolicy.networks(
+                listOf(
+                    ScanAccessPoint("Far", 10, -80),
+                    ScanAccessPoint("Unknown", 10, 0),
+                    ScanAccessPoint("Near", 10, -40),
+                ),
+            )
         assertEquals(listOf("Near", "Far", "Unknown"), networks.map { it.ssid })
     }
 
     @Test fun invalidWifiSignalCannotHideAValidAccessPointInTheSameGroup() {
-        val network = ScanPolicy.networks(listOf(
-            ScanAccessPoint("Home", 10, 0), ScanAccessPoint("Home", 10, -40),
-        )).single()
+        val network =
+            ScanPolicy
+                .networks(
+                    listOf(
+                        ScanAccessPoint("Home", 10, 0),
+                        ScanAccessPoint("Home", 10, -40),
+                    ),
+                ).single()
         assertEquals(-40, network.signalDbm)
         assertEquals(1.0, network.estimatedDistanceMeters!!, 0.0001)
     }
@@ -54,9 +64,14 @@ class SignalDistanceEstimatorTest {
     }
 
     @Test fun wifiGroupUsesTheStrongestAccessPointForItsEstimate() {
-        val network = ScanPolicy.networks(listOf(
-            ScanAccessPoint("Home", 10, -80), ScanAccessPoint("Home", 10, -40),
-        )).single()
+        val network =
+            ScanPolicy
+                .networks(
+                    listOf(
+                        ScanAccessPoint("Home", 10, -80),
+                        ScanAccessPoint("Home", 10, -40),
+                    ),
+                ).single()
         assertEquals(1.0, network.estimatedDistanceMeters!!, 0.0001)
         assertEquals(2, network.accessPoints)
     }

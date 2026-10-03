@@ -4,14 +4,14 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.AtomicFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 interface SessionVault {
     suspend fun read(): String?
@@ -25,7 +25,9 @@ interface SessionVault {
  * AES-256-GCM with a non-exportable Keystore key. Tokens stay in noBackupFilesDir. Authentication
  * tags detect corruption; read errors require a new login, never plaintext fallback.
  */
-class KeystoreSessionVault(context: Context) : SessionVault {
+class KeystoreSessionVault(
+    context: Context,
+) : SessionVault {
     private val file = AtomicFile(File(context.noBackupFilesDir, "blink-session.enc"))
     private val alias = "home-sentinel.session.v1"
     private val aad = "HomeSentinel/session/v1".toByteArray()
@@ -35,20 +37,20 @@ class KeystoreSessionVault(context: Context) : SessionVault {
         (store.getKey(alias, null) as? SecretKey)?.let {
             return it
         }
-        return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        return KeyGenerator
+            .getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
             .apply {
                 init(
-                    KeyGenParameterSpec.Builder(
+                    KeyGenParameterSpec
+                        .Builder(
                             alias,
                             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
-                        )
-                        .setKeySize(256)
+                        ).setKeySize(256)
                         .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                         .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                        .build()
+                        .build(),
                 )
-            }
-            .generateKey()
+            }.generateKey()
     }
 
     override suspend fun read(): String? =

@@ -1,20 +1,38 @@
 package dev.homesentinel.service
 
-import android.bluetooth.BluetoothAdapter
-import dev.homesentinel.domain.repository.WifiScanner
-import dev.homesentinel.domain.usecase.DepartureAlertPolicy
 import android.app.Service
-import android.content.*
+import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.location.LocationManager
-import android.net.*
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.wifi.WifiManager
-import android.os.*
+import android.os.IBinder
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import dev.homesentinel.SentinelApplication
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.LogType
+import dev.homesentinel.domain.model.MonitorStatus
+import dev.homesentinel.domain.model.MonitoringMode
+import dev.homesentinel.domain.model.Settings
+import dev.homesentinel.domain.repository.WifiScanner
+import dev.homesentinel.domain.usecase.DepartureAlertPolicy
 import dev.homesentinel.receiver.WifiScanReceiver
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class WifiMonitorService : Service() {
     private val graph
@@ -27,29 +45,39 @@ class WifiMonitorService : Service() {
     private var supplementalJob: Job? = null
     private var registered = false
     private val connectivity by lazy { getSystemService(ConnectivityManager::class.java) }
-    private val scanReceiver = WifiScanReceiver { success ->
-        if (::automation.isInitialized && current.mode == MonitoringMode.WIFI) {
-            if (!graph.scanner.available())
-                automation.invalid("Wi-Fi, Location, or permission unavailable")
-            else if (success)
-                graph.scanner.readSuccessfulScan(current.homeSsid)?.let(automation::evidence)
-                    ?: automation.scanFailed()
-            else automation.scanFailed()
+    private val scanReceiver =
+        WifiScanReceiver { success ->
+            if (::automation.isInitialized && current.mode == MonitoringMode.WIFI) {
+                if (!graph.scanner.available()) {
+                    automation.invalid("Wi-Fi, Location, or permission unavailable")
+                } else if (success) {
+                    graph.scanner.readSuccessfulScan(current.homeSsid)?.let(automation::evidence)
+                        ?: automation.scanFailed()
+                } else {
+                    automation.scanFailed()
+                }
+            }
         }
-    }
     private val systemReceiver =
         object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
+            override fun onReceive(
+                context: Context,
+                intent: Intent,
+            ) {
                 if (!::automation.isInitialized) return
                 if (current.mode == MonitoringMode.BLUETOOTH) {
                     if (!graph.bluetoothScanner.available()) {
                         graph.bluetoothScanner.stopMonitoring()
                         bluetoothStarted = false
                         automation.invalid("Bluetooth or permission unavailable")
-                    } else if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) startBluetooth()
-                } else if (!graph.scanner.available())
+                    } else if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
+                        startBluetooth()
+                    }
+                } else if (!graph.scanner.available()) {
                     automation.invalid("Enable Wi-Fi and grant precise location access")
-                else graph.scanner.requestScan()
+                } else {
+                    graph.scanner.requestScan()
+                }
             }
         }
     private val wifiCallback =
@@ -68,8 +96,9 @@ class WifiMonitorService : Service() {
                 network: Network,
                 capabilities: NetworkCapabilities,
             ) {
-                if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
+                if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) {
                     scope.launch { if (::automation.isInitialized) automation.retryNow() }
+                }
             }
         }
 
@@ -84,11 +113,14 @@ class WifiMonitorService : Service() {
                 throw e
             } catch (e: Exception) {
                 graph.logs.addError(
-                    "Monitoring service denied: ${e.message}", e, "Monitoring startup",
+                    "Monitoring service denied: ${e.message}",
+                    e,
+                    "Monitoring startup",
                 )
-                graph.monitor.value = MonitorStatus(
-                    note = "Service denied: open the app and check its permissions",
-                )
+                graph.monitor.value =
+                    MonitorStatus(
+                        note = "Service denied: open the app and check its permissions",
+                    )
                 stopSelf()
             }
         }
@@ -98,9 +130,11 @@ class WifiMonitorService : Service() {
         startForeground(
             MonitorNotifications.ID,
             MonitorNotifications.notification(this, "Waiting for detection"),
-            if (current.mode == MonitoringMode.BLUETOOTH)
+            if (current.mode == MonitoringMode.BLUETOOTH) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
-            else ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+            } else {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            },
         )
     }
 
@@ -110,8 +144,11 @@ class WifiMonitorService : Service() {
                 scope,
                 object : WifiScanner by graph.scanner {
                     override fun requestScan(): Boolean =
-                        if (current.mode == MonitoringMode.WIFI) graph.scanner.requestScan()
-                        else graph.bluetoothScanner.available()
+                        if (current.mode == MonitoringMode.WIFI) {
+                            graph.scanner.requestScan()
+                        } else {
+                            graph.bluetoothScanner.available()
+                        }
                 },
                 graph.ensure,
                 SystemClock::elapsedRealtime,
@@ -129,8 +166,11 @@ class WifiMonitorService : Service() {
                 settingsStillCurrent = { expected ->
                     // Journal retention cannot invalidate an otherwise current camera command.
                     graph.settings.snapshot().copy(logRetention = expected.logRetention) == expected &&
-                        if (expected.mode == MonitoringMode.WIFI) graph.scanner.available()
-                        else graph.bluetoothScanner.available()
+                        if (expected.mode == MonitoringMode.WIFI) {
+                            graph.scanner.available()
+                        } else {
+                            graph.bluetoothScanner.available()
+                        }
                 },
                 logError = { message, error -> graph.logs.addError(message, error, "Automatic Blink command") },
             )
@@ -160,9 +200,10 @@ class WifiMonitorService : Service() {
         scope.launch {
             graph.ready.await()
             graph.settings.settings.collect { next ->
-                val sensorChanged = next.mode != current.mode ||
-                    next.bluetoothDeviceAddress != current.bluetoothDeviceAddress ||
-                    next.enabled != current.enabled
+                val sensorChanged =
+                    next.mode != current.mode ||
+                        next.bluetoothDeviceAddress != current.bluetoothDeviceAddress ||
+                        next.enabled != current.enabled
                 val supplementalChanged = next.supplementalScan != current.supplementalScan || sensorChanged
                 current = next
                 automation.configure(next)
@@ -175,20 +216,25 @@ class WifiMonitorService : Service() {
                     foreground()
                 }
                 if (next.mode == MonitoringMode.BLUETOOTH &&
-                    (sensorChanged || !bluetoothStarted)) startBluetooth()
+                    (sensorChanged || !bluetoothStarted)
+                ) {
+                    startBluetooth()
+                }
                 if (next.mode == MonitoringMode.WIFI) {
                     graph.bluetoothScanner.stopMonitoring()
                     bluetoothStarted = false
                 }
                 if (supplementalChanged || (next.supplementalScan && supplementalJob == null)) {
                     supplementalJob?.cancel()
-                    if (next.supplementalScan && next.mode == MonitoringMode.WIFI)
-                        supplementalJob = launch {
-                            while (isActive) {
-                                delay(120_000)
-                                graph.scanner.requestScan()
+                    if (next.supplementalScan && next.mode == MonitoringMode.WIFI) {
+                        supplementalJob =
+                            launch {
+                                while (isActive) {
+                                    delay(120_000)
+                                    graph.scanner.requestScan()
+                                }
                             }
-                        }
+                    }
                 }
             }
         }
@@ -210,13 +256,22 @@ class WifiMonitorService : Service() {
         if (bluetoothStarted && graph.bluetoothScanner.available()) return
         bluetoothStarted = true
         graph.bluetoothScanner.monitor(
-            scope, current.bluetoothDeviceAddress, automation::evidence,
-            { bluetoothStarted = false; automation.invalid(it) },
+            scope,
+            current.bluetoothDeviceAddress,
+            automation::evidence,
+            {
+                bluetoothStarted = false
+                automation.invalid(it)
+            },
             { graph.logs.addError("Bluetooth error: ${it.message}", it, "Bluetooth monitoring") },
         )
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         if (intent?.action == STOP) {
             scope.launch {
                 graph.settings.update { it.copy(enabled = false) }

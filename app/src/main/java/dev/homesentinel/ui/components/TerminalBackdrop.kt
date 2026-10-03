@@ -16,20 +16,21 @@ fun Modifier.terminalBackdrop(): Modifier {
     val gridColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.035f)
     return drawWithCache {
         val spacing = 32.dp.toPx()
-        val grid = Path().apply {
-            var x = spacing
-            while (x < size.width) {
-                moveTo(x, 0f)
-                lineTo(x, size.height)
-                x += spacing
+        val grid =
+            Path().apply {
+                var x = spacing
+                while (x < size.width) {
+                    moveTo(x, 0f)
+                    lineTo(x, size.height)
+                    x += spacing
+                }
+                var y = spacing
+                while (y < size.height) {
+                    moveTo(0f, y)
+                    lineTo(size.width, y)
+                    y += spacing
+                }
             }
-            var y = spacing
-            while (y < size.height) {
-                moveTo(0f, y)
-                lineTo(size.width, y)
-                y += spacing
-            }
-        }
         val stroke = Stroke(width = 0.5.dp.toPx())
         onDrawBehind { drawPath(grid, gridColor, style = stroke) }
     }

@@ -1,14 +1,23 @@
 package dev.homesentinel
 
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.BlinkStatus
+import dev.homesentinel.domain.model.Presence
+import dev.homesentinel.domain.model.Settings
+import dev.homesentinel.domain.model.WifiEvidence
 import dev.homesentinel.domain.usecase.PresenceMachine
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PresenceMachineTest {
     private val settings = Settings(enabled = true, homeSsid = "Home", delaySeconds = 30)
 
-    private fun evidence(t: Long, present: Boolean) = WifiEvidence(t + 1, t, present)
+    private fun evidence(
+        t: Long,
+        present: Boolean,
+    ) = WifiEvidence(t + 1, t, present)
 
     @Test
     fun presentWifiEntersHomeAndRequestsDisarm() {

@@ -3,12 +3,17 @@ package dev.homesentinel.data.bluetooth
 import dev.homesentinel.domain.model.WifiEvidence
 
 /** Only advertisements received during this live window count; paired devices never count. */
-class BluetoothObservationWindow(private val startedAt: Long) {
+class BluetoothObservationWindow(
+    private val startedAt: Long,
+) {
     private var lastSeen = -1L
     private var lastWindow = startedAt
     private var detected = false
 
-    fun advertisement(timestampMillis: Long, now: Long): Boolean {
+    fun advertisement(
+        timestampMillis: Long,
+        now: Long,
+    ): Boolean {
         if (timestampMillis >= lastWindow && timestampMillis <= now && timestampMillis > lastSeen) {
             detected = true
             lastSeen = timestampMillis

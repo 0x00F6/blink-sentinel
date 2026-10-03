@@ -1,6 +1,7 @@
 package dev.homesentinel.domain.repository
 
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.WifiEvidence
+import dev.homesentinel.domain.model.WifiNetwork
 import kotlinx.coroutines.flow.StateFlow
 
 interface WifiScanner {

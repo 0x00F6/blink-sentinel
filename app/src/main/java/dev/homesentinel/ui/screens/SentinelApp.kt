@@ -1,47 +1,97 @@
 package dev.homesentinel.ui.screens
 
+import android.app.Activity
 import android.os.Build
 import android.os.SystemClock
-import android.app.Activity
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.withStyle
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.homesentinel.R
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.AppThemeMode
+import dev.homesentinel.domain.model.BlinkStatus
+import dev.homesentinel.domain.model.LogEntry
+import dev.homesentinel.domain.model.MonitorStatus
+import dev.homesentinel.domain.model.MonitoringMode
+import dev.homesentinel.domain.model.Presence
+import dev.homesentinel.domain.model.Settings
 import dev.homesentinel.ui.SentinelViewModel
-import dev.homesentinel.ui.components.*
+import dev.homesentinel.ui.components.EventLogCard
+import dev.homesentinel.ui.components.LogErrorDialog
+import dev.homesentinel.ui.components.LogRetentionDialog
+import dev.homesentinel.ui.components.Section
+import dev.homesentinel.ui.components.SentinelButton
+import dev.homesentinel.ui.components.SentinelOutlinedButton
+import dev.homesentinel.ui.components.SettingSwitch
+import dev.homesentinel.ui.components.TerminalNavigation
+import dev.homesentinel.ui.components.label
+import dev.homesentinel.ui.components.terminalBackdrop
 import dev.homesentinel.ui.theme.BlinkSentinelTheme
 import dev.homesentinel.ui.theme.LocalTerminalTheme
-import androidx.compose.ui.text.font.FontFamily
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -63,9 +113,10 @@ fun SentinelApp(
     val message by vm.message.collectAsStateWithLifecycle()
     val events by vm.logs.collectAsStateWithLifecycle()
     // Use an unambiguous date and English number formatting even on a non-English phone.
-    val logFormatter = remember {
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", java.util.Locale.ENGLISH).withZone(ZoneId.systemDefault())
-    }
+    val logFormatter =
+        remember {
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", java.util.Locale.ENGLISH).withZone(ZoneId.systemDefault())
+        }
     var selectedError by remember { mutableStateOf<LogEntry?>(null) }
     var showLogRetention by remember { mutableStateOf(false) }
     var tab by remember { mutableIntStateOf(0) }
@@ -100,7 +151,10 @@ fun SentinelApp(
         if (showLogRetention) {
             LogRetentionDialog(
                 current = config.logRetention,
-                onSave = { value -> vm.setLogRetention(value); showLogRetention = false },
+                onSave = { value ->
+                    vm.setLogRetention(value)
+                    showLogRetention = false
+                },
                 onDismiss = { showLogRetention = false },
             )
         }
@@ -128,11 +182,12 @@ fun SentinelApp(
                                     )
                                 },
                                 label = { Text(label) },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                                ),
+                                colors =
+                                    NavigationBarItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                    ),
                             )
                         }
                     }
@@ -152,9 +207,15 @@ fun SentinelApp(
                         ) {
                             Surface(
                                 shape = MaterialTheme.shapes.medium,
-                                color = androidx.compose.ui.graphics.Color(0xFF0A0A0A),
-                                border = if (LocalTerminalTheme.current)
-                                    BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null,
+                                color =
+                                    androidx.compose.ui.graphics
+                                        .Color(0xFF0A0A0A),
+                                border =
+                                    if (LocalTerminalTheme.current) {
+                                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                                    } else {
+                                        null
+                                    },
                             ) {
                                 Image(
                                     painterResource(R.drawable.terminal_b),
@@ -166,20 +227,32 @@ fun SentinelApp(
                                 Text(
                                     "Blink Sentinel",
                                     style = MaterialTheme.typography.headlineSmall,
-                                    color = if (LocalTerminalTheme.current) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurface,
+                                    color =
+                                        if (LocalTerminalTheme.current) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
                                 )
                                 Text(
                                     "Wi-Fi & Bluetooth monitoring",
-                                    style = if (LocalTerminalTheme.current)
-                                        MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
-                                        else MaterialTheme.typography.bodyMedium,
-                                    color = if (LocalTerminalTheme.current) MaterialTheme.colorScheme.secondary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style =
+                                        if (LocalTerminalTheme.current) {
+                                            MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                                        } else {
+                                            MaterialTheme.typography.bodyMedium
+                                        },
+                                    color =
+                                        if (LocalTerminalTheme.current) {
+                                            MaterialTheme.colorScheme.secondary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
                                 )
                             }
-                            if (busy)
+                            if (busy) {
                                 CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                            }
                         }
                     }
                     when (tab) {
@@ -206,9 +279,11 @@ fun SentinelApp(
                             item {
                                 Section(
                                     "Automatic detection",
-                                    if (config.mode == MonitoringMode.WIFI)
+                                    if (config.mode == MonitoringMode.WIFI) {
                                         "A Wi-Fi scan is enough: no connection to your home network is required."
-                                    else "Monitoring uses BLE signals received from the selected device.",
+                                    } else {
+                                        "Monitoring uses BLE signals received from the selected device."
+                                    },
                                 ) {
                                     SettingSwitch(
                                         "Automatic monitoring",
@@ -218,15 +293,18 @@ fun SentinelApp(
                                     ) {
                                         if (it) vm.enable() else vm.disable()
                                     }
-                                    val lastSignal = monitor.lastSignalAtEpochMillis
-                                        .takeIf { monitor.lastSignalSource == config.signalSourceKey }
+                                    val lastSignal =
+                                        monitor.lastSignalAtEpochMillis
+                                            .takeIf { monitor.lastSignalSource == config.signalSourceKey }
                                     Text(
-                                        "Last signal received: " + (lastSignal?.let {
-                                            logFormatter.format(Instant.ofEpochMilli(it))
-                                        } ?: "no signal received since monitoring started"),
+                                        "Last signal received: " + (
+                                            lastSignal?.let {
+                                                logFormatter.format(Instant.ofEpochMilli(it))
+                                            } ?: "no signal received since monitoring started"
+                                        ),
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
-                                    if (config.enabled && !monitor.running)
+                                    if (config.enabled && !monitor.running) {
                                         SentinelButton(
                                             onClick = vm::enable,
                                             enabled = !busy,
@@ -234,6 +312,7 @@ fun SentinelApp(
                                         ) {
                                             Text("Resume monitoring")
                                         }
+                                    }
                                     SettingSwitch(
                                         "Disarm on return",
                                         "After a fresh detection of the home sensor",
@@ -288,22 +367,51 @@ fun SentinelApp(
                         }
                         1 -> {
                             item {
-                                Section("Monitoring mode", "Changing mode stops monitoring. Selecting a sensor enables it automatically when Blink and Android permissions are ready.") {
+                                Section(
+                                    "Monitoring mode",
+                                    "Changing mode stops monitoring. Selecting a sensor enables it automatically when Blink and Android permissions are ready.",
+                                ) {
                                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         MonitoringMode.entries.forEach { mode ->
                                             val selected = config.mode == mode
                                             Surface(
                                                 modifier = Modifier.weight(1f),
                                                 shape = MaterialTheme.shapes.medium,
-                                                color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                                                border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+                                                color =
+                                                    if (selected) {
+                                                        MaterialTheme.colorScheme.primaryContainer
+                                                    } else {
+                                                        MaterialTheme.colorScheme.surface
+                                                    },
+                                                border =
+                                                    BorderStroke(
+                                                        1.dp,
+                                                        if (selected) {
+                                                            MaterialTheme.colorScheme.primary
+                                                        } else {
+                                                            MaterialTheme.colorScheme.outlineVariant
+                                                        },
+                                                    ),
                                             ) {
                                                 Row(
-                                                    Modifier.clickable(enabled = !busy) { vm.chooseMode(mode) }.padding(vertical = 10.dp, horizontal = 8.dp),
+                                                    Modifier
+                                                        .clickable(
+                                                            enabled = !busy,
+                                                        ) { vm.chooseMode(mode) }
+                                                        .padding(vertical = 10.dp, horizontal = 8.dp),
                                                     verticalAlignment = Alignment.CenterVertically,
                                                 ) {
                                                     RadioButton(selected, { vm.chooseMode(mode) }, enabled = !busy)
-                                                    Text(if (mode == MonitoringMode.WIFI) "Wi-Fi" else "Bluetooth", style = MaterialTheme.typography.titleSmall)
+                                                    Text(
+                                                        if (mode ==
+                                                            MonitoringMode.WIFI
+                                                        ) {
+                                                            "Wi-Fi"
+                                                        } else {
+                                                            "Bluetooth"
+                                                        },
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                    )
                                                 }
                                             }
                                         }
@@ -359,7 +467,7 @@ fun SentinelApp(
                             item {
                                 Section("About Blink") {
                                     Text(
-                                        "This independent app uses Blink's mobile protocol, an unofficial API that may change. Sign in with your Blink credentials, then enter the verification code if requested."
+                                        "This independent app uses Blink's mobile protocol, an unofficial API that may change. Sign in with your Blink credentials, then enter the verification code if requested.",
                                     )
                                     Text(
                                         "Your password is never saved. Tokens are encrypted with an Android Keystore key. Only the selected system is automated.",
@@ -400,16 +508,23 @@ fun SentinelApp(
 }
 
 @Composable
-private fun PresenceCard(monitor: MonitorStatus, config: Settings, status: BlinkStatus) {
+private fun PresenceCard(
+    monitor: MonitorStatus,
+    config: Settings,
+    status: BlinkStatus,
+) {
     val colors = MaterialTheme.colorScheme
     val terminalTheme = LocalTerminalTheme.current
-    val (background, foreground) = if (!monitor.running) {
-        colors.errorContainer to colors.onErrorContainer
-    } else when (monitor.presence) {
-        Presence.HOME -> colors.primaryContainer to colors.onPrimaryContainer
-        Presence.AWAY_PENDING -> colors.tertiaryContainer to colors.onTertiaryContainer
-        Presence.AWAY, Presence.UNKNOWN -> colors.secondaryContainer to colors.onSecondaryContainer
-    }
+    val (background, foreground) =
+        if (!monitor.running) {
+            colors.errorContainer to colors.onErrorContainer
+        } else {
+            when (monitor.presence) {
+                Presence.HOME -> colors.primaryContainer to colors.onPrimaryContainer
+                Presence.AWAY_PENDING -> colors.tertiaryContainer to colors.onTertiaryContainer
+                Presence.AWAY, Presence.UNKNOWN -> colors.secondaryContainer to colors.onSecondaryContainer
+            }
+        }
     Card(
         colors = CardDefaults.cardColors(containerColor = background, contentColor = foreground),
         border = if (LocalTerminalTheme.current) BorderStroke(1.dp, foreground.copy(alpha = 0.35f)) else null,
@@ -434,10 +549,11 @@ private fun PresenceCard(monitor: MonitorStatus, config: Settings, status: Blink
                             .animateFloat(
                                 initialValue = 0.25f,
                                 targetValue = 1f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(850, easing = FastOutSlowInEasing),
-                                    repeatMode = RepeatMode.Reverse,
-                                ),
+                                animationSpec =
+                                    infiniteRepeatable(
+                                        animation = tween(850, easing = FastOutSlowInEasing),
+                                        repeatMode = RepeatMode.Reverse,
+                                    ),
                                 label = "monitoring dot alpha",
                             )
                         Box(Modifier.size(8.dp).background(Color(0xFF00FF88).copy(alpha = pulse), CircleShape))
@@ -462,14 +578,20 @@ private fun PresenceCard(monitor: MonitorStatus, config: Settings, status: Blink
                         buildAnnotatedString {
                             append("Blink: ")
                             when (status) {
-                                BlinkStatus.ARMED -> withStyle(SpanStyle(
-                                    color = if (terminalTheme) Color(0xFF00FF88) else Color(0xFF006B35),
-                                    fontWeight = FontWeight.Bold,
-                                )) { append("Armed") }
-                                BlinkStatus.DISARMED -> withStyle(SpanStyle(
-                                    color = if (terminalTheme) Color(0xFFFFD36A) else Color(0xFF795500),
-                                    fontWeight = FontWeight.Bold,
-                                )) { append("Disarmed") }
+                                BlinkStatus.ARMED ->
+                                    withStyle(
+                                        SpanStyle(
+                                            color = if (terminalTheme) Color(0xFF00FF88) else Color(0xFF006B35),
+                                            fontWeight = FontWeight.Bold,
+                                        ),
+                                    ) { append("Armed") }
+                                BlinkStatus.DISARMED ->
+                                    withStyle(
+                                        SpanStyle(
+                                            color = if (terminalTheme) Color(0xFFFFD36A) else Color(0xFF795500),
+                                            fontWeight = FontWeight.Bold,
+                                        ),
+                                    ) { append("Disarmed") }
                                 BlinkStatus.UNKNOWN -> append("State unknown")
                             }
                         },
@@ -483,12 +605,19 @@ private fun PresenceCard(monitor: MonitorStatus, config: Settings, status: Blink
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 val wifi = config.mode == MonitoringMode.WIFI
-                Icon(painterResource(if (wifi) R.drawable.ic_network else R.drawable.ic_bluetooth), contentDescription = null, modifier = Modifier.size(24.dp))
+                Icon(
+                    painterResource(if (wifi) R.drawable.ic_network else R.drawable.ic_bluetooth),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                )
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(if (wifi) "Monitored Wi-Fi" else "Monitored Bluetooth", style = MaterialTheme.typography.labelMedium)
                     Text(
-                        if (wifi) config.homeSsid.ifBlank { "Not configured" }
-                        else config.bluetoothDeviceName.ifBlank { config.bluetoothDeviceAddress.ifBlank { "Not configured" } },
+                        if (wifi) {
+                            config.homeSsid.ifBlank { "Not configured" }
+                        } else {
+                            config.bluetoothDeviceName.ifBlank { config.bluetoothDeviceAddress.ifBlank { "Not configured" } }
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -511,8 +640,11 @@ private fun Countdown(deadline: Long) {
         }
     }
     Text(
-        if (remaining > 0) "Confirmation in $remaining s"
-        else "Waiting for a confirmation scan",
+        if (remaining > 0) {
+            "Confirmation in $remaining s"
+        } else {
+            "Waiting for a confirmation scan"
+        },
         style = MaterialTheme.typography.labelLarge,
     )
 }
@@ -531,35 +663,47 @@ private fun PermissionsSection(
     val bluetooth = config.mode == MonitoringMode.BLUETOOTH
     Section(
         "Android permissions",
-        if (bluetooth) "Android 12+: Nearby devices permission. Android Location can remain off."
-        else "Android requires precise location permission to read SSIDs. GPS is not used.",
+        if (bluetooth) {
+            "Android 12+: Nearby devices permission. Android Location can remain off."
+        } else {
+            "Android requires precise location permission to read SSIDs. GPS is not used."
+        },
     ) {
-        if (bluetooth) Text("Bluetooth ready: ${if (p.bluetoothAvailable) "yes" else "check Android 12+, permissions, and Bluetooth"}")
-        else Text(
-            "Precise location: ${if (p.precise) "granted" else "not granted"}\nAndroid Location: ${if (p.locationEnabled) "on" else "off"}\nWi-Fi: ${if (p.wifiEnabled) "on" else "off"}\nNotifications: ${if (p.notifications) "allowed" else "not allowed"}"
-        )
+        if (bluetooth) {
+            Text("Bluetooth ready: ${if (p.bluetoothAvailable) "yes" else "check Android 12+, permissions, and Bluetooth"}")
+        } else {
+            Text(
+                "Precise location: ${if (p.precise) "granted" else "not granted"}\nAndroid Location: ${if (p.locationEnabled) "on" else "off"}\nWi-Fi: ${if (p.wifiEnabled) "on" else "off"}\nNotifications: ${if (p.notifications) "allowed" else "not allowed"}",
+            )
+        }
         SentinelButton(onClick = access, modifier = Modifier.fillMaxWidth()) {
             Text("Grant required permissions")
         }
-        if (!bluetooth && !p.locationEnabled)
+        if (!bluetooth && !p.locationEnabled) {
             TextButton(onClick = location) { Text("Enable Android Location") }
+        }
         TextButton(onClick = settings) { Text("Open app settings") }
         HorizontalDivider()
         Text("Resume after reboot", style = MaterialTheme.typography.titleSmall)
         Text(
-            if (bluetooth) "Bluetooth can resume without Location if permissions are retained. Otherwise, open the app from the notification."
-            else if (p.background)
+            if (bluetooth) {
+                "Bluetooth can resume without Location if permissions are retained. Otherwise, open the app from the notification."
+            } else if (p.background) {
                 "Background location granted: automatic recovery after reboot is available."
-            else
-                "Optional: to resume after reboot without opening the app, choose Location → Allow all the time in settings. Without this access, a notification will offer to resume.",
+            } else {
+                "Optional: to resume after reboot without opening the app, choose Location → Allow all the time in settings. Without this access, a notification will offer to resume."
+            },
             style = MaterialTheme.typography.bodySmall,
         )
         if (!bluetooth) SentinelOutlinedButton(onClick = boot) { Text("Configure boot recovery") }
         HorizontalDivider()
         Text("Background battery use", style = MaterialTheme.typography.titleSmall)
         Text(
-            if (p.batteryOptimized) "Battery optimization: enabled for this app"
-            else "Battery optimization: disabled for this app",
+            if (p.batteryOptimized) {
+                "Battery optimization: enabled for this app"
+            } else {
+                "Battery optimization: disabled for this app"
+            },
         )
         Text(
             "Allow unrestricted battery use to help monitoring continue in the background. Confirm the Android request; this may use more battery. The status refreshes when you return.",
@@ -576,21 +720,37 @@ private fun PermissionsSection(
 }
 
 @Composable
-private fun BluetoothSection(vm: SentinelViewModel, config: Settings, busy: Boolean, access: () -> Unit) {
+private fun BluetoothSection(
+    vm: SentinelViewModel,
+    config: Settings,
+    busy: Boolean,
+    access: () -> Unit,
+) {
     val devices by vm.bluetoothDevices.collectAsStateWithLifecycle()
     val searching by vm.bluetoothSearching.collectAsStateWithLifecycle()
     Section("Home Bluetooth device") {
         Text("Android 12 or later is required to work with Location off. On Android 10/11, use Wi-Fi mode.")
-        Text("Choose a stationary, continuously powered BLE device that advertises every few seconds with a stable address. Pairing alone does not prove presence. Classic-only Bluetooth devices, rotating addresses, and some beacons filtered by Android are unsuitable.")
-        Text("Monitoring uses 10-second BLE windows, followed by the arming delay and another absence confirmation. A returning signal cancels departure immediately. Bluetooth off or scanner failure means an unknown state.")
+        Text(
+            "Choose a stationary, continuously powered BLE device that advertises every few seconds with a stable address. Pairing alone does not prove presence. Classic-only Bluetooth devices, rotating addresses, and some beacons filtered by Android are unsuitable.",
+        )
+        Text(
+            "Monitoring uses 10-second BLE windows, followed by the arming delay and another absence confirmation. A returning signal cancels departure immediately. Bluetooth off or scanner failure means an unknown state.",
+        )
         Text(config.bluetoothDeviceName.ifBlank { "No device selected" } + "\n" + config.bluetoothDeviceAddress)
         SentinelOutlinedButton(onClick = access) { Text("Allow Bluetooth and notifications") }
         SentinelButton(onClick = vm::scanBluetooth, enabled = !busy && !searching && Build.VERSION.SDK_INT >= 31) {
             Text(if (searching) "Bluetooth discovery in progress…" else "Search for 22 seconds")
         }
-        Text("Discovery stops monitoring to avoid interference. Selecting a device enables monitoring with a silent notification when Blink and Android permissions are ready.")
-        Text("Detected paired and discoverable classic Bluetooth devices also show their Android name. Put unpaired classic devices in discoverable mode. All detected devices can be selected. Results disappear after 30 seconds without detection; search again to refresh the list.")
-        Text("Approximate distances use the received signal without calibration. Pairing alone provides no measured signal or distance.", style = MaterialTheme.typography.bodySmall)
+        Text(
+            "Discovery stops monitoring to avoid interference. Selecting a device enables monitoring with a silent notification when Blink and Android permissions are ready.",
+        )
+        Text(
+            "Detected paired and discoverable classic Bluetooth devices also show their Android name. Put unpaired classic devices in discoverable mode. All detected devices can be selected. Results disappear after 30 seconds without detection; search again to refresh the list.",
+        )
+        Text(
+            "Approximate distances use the received signal without calibration. Pairing alone provides no measured signal or distance.",
+            style = MaterialTheme.typography.bodySmall,
+        )
         devices.forEach { device ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(config.bluetoothDeviceAddress == device.address, {
@@ -601,26 +761,35 @@ private fun BluetoothSection(vm: SentinelViewModel, config: Settings, busy: Bool
                     Text(device.address, style = MaterialTheme.typography.bodySmall)
                     Text(distanceLabel(device.estimatedDistanceMeters), style = MaterialTheme.typography.bodySmall)
                     Text(
-                        (if (device.bleObserved) "BLE detected · ${device.rssi} dBm"
-                        else if (device.classic) "Classic Bluetooth · selectable, BLE monitoring unconfirmed"
-                        else "Bluetooth · no BLE advertisements detected") +
+                        (
+                            if (device.bleObserved) {
+                                "BLE detected · ${device.rssi} dBm"
+                            } else if (device.classic) {
+                                "Classic Bluetooth · selectable, BLE monitoring unconfirmed"
+                            } else {
+                                "Bluetooth · no BLE advertisements detected"
+                            }
+                        ) +
                             if (device.bonded) " · paired" else "",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
         }
-        Text("Test detection with the phone locked and Location off before automating Blink. Android and the manufacturer may suspend monitoring.")
+        Text(
+            "Test detection with the phone locked and Location off before automating Blink. Android and the manufacturer may suspend monitoring.",
+        )
     }
 }
 
 private fun distanceLabel(meters: Double?): String {
     if (meters == null) return "Estimated distance: unavailable (signal not measured)"
-    val distance = when {
-        meters < 0.1 -> "< 0.1 m"
-        meters < 10 -> "≈ %.1f m".format(java.util.Locale.ENGLISH, meters)
-        else -> "≈ %.0f m".format(java.util.Locale.ENGLISH, meters)
-    }
+    val distance =
+        when {
+            meters < 0.1 -> "< 0.1 m"
+            meters < 10 -> "≈ %.1f m".format(java.util.Locale.ENGLISH, meters)
+            else -> "≈ %.0f m".format(java.util.Locale.ENGLISH, meters)
+        }
     return "Estimated distance: $distance"
 }
 
@@ -643,7 +812,10 @@ private fun WifiList(
     }
     var manual by remember(config.homeSsid) { mutableStateOf(config.homeSsid) }
     Section("Detected networks") {
-        Text("Approximate distances use the strongest access point's signal. Walls and transmit power can greatly affect the estimate.", style = MaterialTheme.typography.bodySmall)
+        Text(
+            "Approximate distances use the strongest access point's signal. Walls and transmit power can greatly affect the estimate.",
+            style = MaterialTheme.typography.bodySmall,
+        )
         Text(searchMessage)
         if (!permissions.precise) {
             Text("Precise location permission is missing (required for Wi-Fi, including after using Bluetooth).")
@@ -658,7 +830,10 @@ private fun WifiList(
             Text("Wi-Fi is off: enable it in Android Quick Settings.")
         }
         if (networks.isEmpty()) Text("No recent results are available yet.")
-        Text("Selecting a network enables monitoring with a silent notification when Blink and Android permissions are ready.", style = MaterialTheme.typography.bodySmall)
+        Text(
+            "Selecting a network enables monitoring with a silent notification when Blink and Android permissions are ready.",
+            style = MaterialTheme.typography.bodySmall,
+        )
         networks.forEach { network ->
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(
@@ -698,7 +873,11 @@ private fun WifiList(
 }
 
 @Composable
-private fun DelaySection(vm: SentinelViewModel, config: Settings, busy: Boolean) {
+private fun DelaySection(
+    vm: SentinelViewModel,
+    config: Settings,
+    busy: Boolean,
+) {
     var input by remember(config.delaySeconds) { mutableStateOf(config.delaySeconds.toString()) }
     val valid = input.toIntOrNull()?.let { it in 10..600 } == true
     Section(
@@ -740,7 +919,7 @@ private fun BlinkSection(
     Section(if (connected) "Signed in to Blink" else "Sign in to Blink") {
         if (connected) {
             Text(
-                "Choose the system to automate. Other systems in your account are unaffected."
+                "Choose the system to automate. Other systems in your account are unaffected.",
             )
             if (systems.isEmpty()) Text("No systems available: refresh the list.")
             systems.forEach { system ->
@@ -766,7 +945,7 @@ private fun BlinkSection(
             TextButton(onClick = vm::logout, enabled = !busy) { Text("Sign out of Blink") }
         } else if (twoFactor) {
             Text(
-                "Enter the code received from Blink. If verification has expired, start signing in again."
+                "Enter the code received from Blink. If verification has expired, start signing in again.",
             )
             OutlinedTextField(
                 code,

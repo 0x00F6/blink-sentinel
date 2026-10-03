@@ -1,6 +1,10 @@
 package dev.homesentinel.domain.usecase
 
-import dev.homesentinel.domain.model.*
+import dev.homesentinel.domain.model.BlinkStatus
+import dev.homesentinel.domain.model.MonitoringMode
+import dev.homesentinel.domain.model.Presence
+import dev.homesentinel.domain.model.Settings
+import dev.homesentinel.domain.model.WifiEvidence
 
 /**
  * Only a second, fresh, successful scan after the deadline may confirm AWAY. A timer, a lost
@@ -27,7 +31,11 @@ class PresenceMachine {
         lastObservation = null
     }
 
-    fun observe(evidence: WifiEvidence, settings: Settings, now: Long): BlinkStatus? {
+    fun observe(
+        evidence: WifiEvidence,
+        settings: Settings,
+        now: Long,
+    ): BlinkStatus? {
         if (!settings.enabled) {
             reset()
             return null
@@ -53,7 +61,8 @@ class PresenceMachine {
         }
         return when (state) {
             Presence.UNKNOWN,
-            Presence.HOME -> {
+            Presence.HOME,
+            -> {
                 state = Presence.AWAY_PENDING
                 pendingAt = evidence.observedAt
                 deadline = evidence.observedAt + settings.delaySeconds * 1_000L
@@ -65,7 +74,9 @@ class PresenceMachine {
                     deadline = null
                     pendingAt = null
                     BlinkStatus.ARMED
-                } else null
+                } else {
+                    null
+                }
             }
             Presence.AWAY -> null
         }

@@ -1,15 +1,26 @@
 package dev.homesentinel
 
-import dev.homesentinel.data.blink.*
+import dev.homesentinel.data.blink.BlinkEndpoints
+import dev.homesentinel.data.blink.fetch
+import dev.homesentinel.data.blink.networkErrorDetail
 import dev.homesentinel.data.preferences.EventLog
 import dev.homesentinel.domain.model.BlinkException
+import kotlinx.coroutines.test.runTest
+import okhttp3.Dns
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Test
 import java.io.IOException
 import java.net.UnknownHostException
-import kotlinx.coroutines.test.runTest
-import okhttp3.*
-import okhttp3.mockwebserver.*
-import org.junit.Assert.*
-import org.junit.Test
 
 class DiagnosticsTest {
     @Test fun regionalUrlsAlwaysUseRestPrefix() {
@@ -25,7 +36,8 @@ class DiagnosticsTest {
     }
 
     @Test fun secretsAreMaskedInHeadersFormsJsonUrlsAndTraceMessages() {
-        val text = """
+        val text =
+            """
             Authorization: Bearer hidden1
             Cookie: sid=hidden2; other=hidden3
             Set-Cookie: sid=hidden4
@@ -33,7 +45,7 @@ class DiagnosticsTest {
             password=hidden8&otp=hidden9&code_verifier=hidden10
             https://user:hidden11@host/path?code=hidden12&state=hidden13
             java.io.IOException: client_secret='hidden14 with spaces' token=hidden15
-        """.trimIndent()
+            """.trimIndent()
         val safe = EventLog.sanitizeSecrets(text)
         (1..15).forEach { assertFalse("Leaked secret $it: $safe", safe.contains("hidden$it")) }
         assertTrue(safe.contains("java.io.IOException"))
@@ -46,43 +58,50 @@ class DiagnosticsTest {
         assertFalse(safe.contains("private"))
     }
 
-    @Test fun failureBeforeResponseKeepsTheOriginalCauseAndRealRequestContext() = runTest {
-        val cause = UnknownHostException("Test DNS failure")
-        val client = OkHttpClient.Builder().dns(object : Dns {
-            override fun lookup(hostname: String): List<java.net.InetAddress> = throw cause
-        }).build()
-        try {
-            client.fetch(Request.Builder().url("https://blink.invalid/status").build(), "Read status")
-            fail("Expected network failure")
-        } catch (e: BlinkException) {
-            assertSame(cause, e.cause)
-            assertEquals("GET", e.context!!.httpMethod)
-            assertEquals("https://blink.invalid/status", e.context!!.url)
-            assertEquals("Read status", e.context!!.operation)
-            assertNull(e.context!!.httpStatus)
-            assertTrue(e.message!!.contains("UnknownHostException"))
-        } finally {
-            client.dispatcher.executorService.shutdown()
-            client.connectionPool.evictAll()
+    @Test fun failureBeforeResponseKeepsTheOriginalCauseAndRealRequestContext() =
+        runTest {
+            val cause = UnknownHostException("Test DNS failure")
+            val client =
+                OkHttpClient
+                    .Builder()
+                    .dns(
+                        object : Dns {
+                            override fun lookup(hostname: String): List<java.net.InetAddress> = throw cause
+                        },
+                    ).build()
+            try {
+                client.fetch(Request.Builder().url("https://blink.invalid/status").build(), "Read status")
+                fail("Expected network failure")
+            } catch (e: BlinkException) {
+                assertSame(cause, e.cause)
+                assertEquals("GET", e.context!!.httpMethod)
+                assertEquals("https://blink.invalid/status", e.context!!.url)
+                assertEquals("Read status", e.context!!.operation)
+                assertNull(e.context!!.httpStatus)
+                assertTrue(e.message!!.contains("UnknownHostException"))
+            } finally {
+                client.dispatcher.executorService.shutdown()
+                client.connectionPool.evictAll()
+            }
         }
-    }
 
-    @Test fun interruptedBodyRetainsTheReceivedHttpStatusAndOriginalCause() = runTest {
-        val server = MockWebServer()
-        server.enqueue(MockResponse().setBody("x".repeat(1000)).setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY))
-        server.start()
-        val client = OkHttpClient.Builder().retryOnConnectionFailure(false).build()
-        try {
-            client.fetch(Request.Builder().url(server.url("/status")).build(), "Read status")
-            fail("Expected interrupted body")
-        } catch (e: BlinkException) {
-            assertTrue(e.cause is IOException)
-            assertEquals(200, e.context!!.httpStatus)
-            assertEquals(server.url("/status").toString(), e.context!!.url)
-        } finally {
-            server.shutdown()
-            client.dispatcher.executorService.shutdown()
-            client.connectionPool.evictAll()
+    @Test fun interruptedBodyRetainsTheReceivedHttpStatusAndOriginalCause() =
+        runTest {
+            val server = MockWebServer()
+            server.enqueue(MockResponse().setBody("x".repeat(1000)).setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY))
+            server.start()
+            val client = OkHttpClient.Builder().retryOnConnectionFailure(false).build()
+            try {
+                client.fetch(Request.Builder().url(server.url("/status")).build(), "Read status")
+                fail("Expected interrupted body")
+            } catch (e: BlinkException) {
+                assertTrue(e.cause is IOException)
+                assertEquals(200, e.context!!.httpStatus)
+                assertEquals(server.url("/status").toString(), e.context!!.url)
+            } finally {
+                server.shutdown()
+                client.dispatcher.executorService.shutdown()
+                client.connectionPool.evictAll()
+            }
         }
-    }
 }

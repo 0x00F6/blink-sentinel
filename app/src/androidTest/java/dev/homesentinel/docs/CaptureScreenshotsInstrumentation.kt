@@ -24,6 +24,7 @@ import dev.homesentinel.domain.model.BlinkStatus
 import dev.homesentinel.domain.model.BlinkSystem
 import dev.homesentinel.domain.model.LogType
 import dev.homesentinel.ui.SentinelViewModel
+import dev.homesentinel.ui.components.label
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking

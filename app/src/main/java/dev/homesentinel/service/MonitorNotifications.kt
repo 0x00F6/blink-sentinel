@@ -1,7 +1,10 @@
 package dev.homesentinel.service
 
 import android.Manifest
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -32,11 +35,15 @@ object MonitorNotifications {
                     setSound(null, null)
                     enableVibration(false)
                     setShowBadge(false)
-                }
+                },
             )
     }
 
-    fun notification(context: Context, text: String, ongoing: Boolean = true): Notification {
+    fun notification(
+        context: Context,
+        text: String,
+        ongoing: Boolean = true,
+    ): Notification {
         createChannel(context)
         val open =
             PendingIntent.getActivity(
@@ -46,7 +53,8 @@ object MonitorNotifications {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
         val builder =
-            Notification.Builder(context, CHANNEL)
+            Notification
+                .Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("Blink Sentinel")
                 .setContentText(text)
@@ -73,26 +81,43 @@ object MonitorNotifications {
         val notifications = context.getSystemService(NotificationManager::class.java)
         val audio = context.getSystemService(AudioManager::class.java)
         if (notifications.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL ||
-            audio.ringerMode == AudioManager.RINGER_MODE_SILENT) return
-        val vibrator = if (Build.VERSION.SDK_INT >= 31)
-            context.getSystemService(VibratorManager::class.java).defaultVibrator
-        else context.getSystemService(Vibrator::class.java)
+            audio.ringerMode == AudioManager.RINGER_MODE_SILENT
+        ) {
+            return
+        }
+        val vibrator =
+            if (Build.VERSION.SDK_INT >= 31) {
+                context.getSystemService(VibratorManager::class.java).defaultVibrator
+            } else {
+                context.getSystemService(Vibrator::class.java)
+            }
         if (!vibrator.hasVibrator()) return
         val effect = VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE)
         if (Build.VERSION.SDK_INT >= 33) {
-            vibrator.vibrate(effect, VibrationAttributes.Builder()
-                .setUsage(VibrationAttributes.USAGE_NOTIFICATION).build())
+            vibrator.vibrate(
+                effect,
+                VibrationAttributes
+                    .Builder()
+                    .setUsage(VibrationAttributes.USAGE_NOTIFICATION)
+                    .build(),
+            )
         } else {
-            vibrator.vibrate(effect, AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+            vibrator.vibrate(
+                effect,
+                AudioAttributes
+                    .Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build(),
+            )
         }
     }
 
     fun resumeReminder(context: Context) {
         if (
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
-                PackageManager.PERMISSION_GRANTED || android.os.Build.VERSION.SDK_INT < 33
+            PackageManager.PERMISSION_GRANTED ||
+            android.os.Build.VERSION.SDK_INT < 33
         ) {
             context
                 .getSystemService(NotificationManager::class.java)

@@ -10,7 +10,10 @@ object SignalDistanceEstimator {
 
     fun bluetoothMeters(rssiDbm: Int?): Double? = meters(rssiDbm, referenceAtOneMeterDbm = -59)
 
-    private fun meters(rssiDbm: Int?, referenceAtOneMeterDbm: Int): Double? {
+    private fun meters(
+        rssiDbm: Int?,
+        referenceAtOneMeterDbm: Int,
+    ): Double? {
         // Missing RSSI and Android's unknown/invalid sentinel values must not become distances.
         if (rssiDbm == null || rssiDbm !in -126..-1) return null
         return 10.0.pow((referenceAtOneMeterDbm - rssiDbm) / (10.0 * PATH_LOSS_EXPONENT))

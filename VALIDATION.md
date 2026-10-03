@@ -178,3 +178,16 @@ Bluetooth without Location is offered **only on Android 12+**, for a BLE device 
 - The runner exercised error opening, copying, closing, and log-retention settings, then reset authentication UI fixtures and cleared DEMO journal entries. The existing emulator containing a Blink session was rejected and its data was preserved; no physical phone was used.
 - Verified every Makefile target is documented, relative Markdown links resolve, and all fourteen PNG dimensions/signatures are valid. Checked `env -u NO_COLOR make help` and `NO_COLOR= make help`: variables have ANSI colors only when colors are enabled; emojis remain in both cases. `git diff --check` passed.
 - No Git push, release publication, or real-device behavior validation was performed for these documentation changes.
+
+
+## Release formatting preflight fix (2026-10-03)
+
+The release preflight stopped because wildcard imports cannot be corrected automatically by ktlint. Replaced wildcard imports with explicit imports throughout the application and JVM tests, added `.editorconfig` with four-space Kotlin formatting and the Compose naming exception, and wrapped long expressions without changing their values or behavior. The Compose naming setting follows the [official ktlint configuration](https://ktlint.github.io/ktlint/latest/rules/standard/#function-naming).
+
+Using `JAVA_HOME=/home/o/.jdks/jbr-21.0.11` with its `bin` directory on `PATH`:
+
+- `make check`: passed Kotlin formatting, 130 JVM tests (zero failures/errors/skips), and Android lint.
+- `./gradlew ktlintCheck assembleDebug assembleDebugAndroidTest`: passed style verification and both APK builds.
+- `git diff --check`: passed. No wildcard Kotlin imports remain in `app/src`.
+
+AGP compatibility/deprecation and Build-Tools warnings remain visible; they did not fail these checks. No release command, signing password prompt, version update, Git push, or GitHub publication was performed. JVM Blink tests use MockWebServer and fictitious sessions; no live account or device validation was performed.

@@ -39,25 +39,37 @@ class EventLog internal constructor(
                 val detailsObj = row.optJSONObject("errorDetails")
                 val type = LogType.entries.firstOrNull { it.name == row.optString("type") } ?: LogType.INFO
                 val isError = row.optBoolean("isError", false) || detailsObj != null || type == LogType.ERROR
-                val details = detailsObj?.let { d ->
-                    ErrorDetails(
-                        operation = d.optString("operation", ""),
-                        httpMethod = d.optString("httpMethod", ""),
-                        url = d.optString("url", ""),
-                        httpStatus = d.optString("httpStatus", ""),
-                        exceptionType = d.optString("exceptionType", ""),
-                        exceptionMessage = d.optString("exceptionMessage", ""),
-                        causes = d.optString("causes", ""),
-                        stackTrace = d.optString("stackTrace", ""),
-                    )
-                }
-                LogEntry(row.getLong("at"), sanitizeSecrets(row.getString("message")), isError, details?.let {
-                    it.copy(operation = sanitizeSecrets(it.operation), httpMethod = sanitizeSecrets(it.httpMethod),
-                        httpStatus = sanitizeSecrets(it.httpStatus), exceptionType = sanitizeSecrets(it.exceptionType),
-                        url = sanitizeSecrets(it.url),
-                        exceptionMessage = sanitizeSecrets(it.exceptionMessage),
-                        causes = sanitizeSecrets(it.causes), stackTrace = sanitizeSecrets(it.stackTrace))
-                }, if (isError) LogType.ERROR else type)
+                val details =
+                    detailsObj?.let { d ->
+                        ErrorDetails(
+                            operation = d.optString("operation", ""),
+                            httpMethod = d.optString("httpMethod", ""),
+                            url = d.optString("url", ""),
+                            httpStatus = d.optString("httpStatus", ""),
+                            exceptionType = d.optString("exceptionType", ""),
+                            exceptionMessage = d.optString("exceptionMessage", ""),
+                            causes = d.optString("causes", ""),
+                            stackTrace = d.optString("stackTrace", ""),
+                        )
+                    }
+                LogEntry(
+                    row.getLong("at"),
+                    sanitizeSecrets(row.getString("message")),
+                    isError,
+                    details?.let {
+                        it.copy(
+                            operation = sanitizeSecrets(it.operation),
+                            httpMethod = sanitizeSecrets(it.httpMethod),
+                            httpStatus = sanitizeSecrets(it.httpStatus),
+                            exceptionType = sanitizeSecrets(it.exceptionType),
+                            url = sanitizeSecrets(it.url),
+                            exceptionMessage = sanitizeSecrets(it.exceptionMessage),
+                            causes = sanitizeSecrets(it.causes),
+                            stackTrace = sanitizeSecrets(it.stackTrace),
+                        )
+                    },
+                    if (isError) LogType.ERROR else type,
+                )
             }
         } catch (_: Exception) {
             emptyList()
@@ -71,25 +83,27 @@ class EventLog internal constructor(
         type: LogType = LogType.INFO,
     ) {
         val sanitizedMsg = sanitizeSecrets(message)
-        val sanitizedDetails = errorDetails?.let { d ->
-            ErrorDetails(
-                operation = sanitizeSecrets(d.operation),
-                httpMethod = sanitizeSecrets(d.httpMethod),
-                url = sanitizeSecrets(d.url),
-                httpStatus = sanitizeSecrets(d.httpStatus),
-                exceptionType = sanitizeSecrets(d.exceptionType),
-                exceptionMessage = sanitizeSecrets(d.exceptionMessage),
-                causes = sanitizeSecrets(d.causes),
-                stackTrace = sanitizeSecrets(d.stackTrace),
+        val sanitizedDetails =
+            errorDetails?.let { d ->
+                ErrorDetails(
+                    operation = sanitizeSecrets(d.operation),
+                    httpMethod = sanitizeSecrets(d.httpMethod),
+                    url = sanitizeSecrets(d.url),
+                    httpStatus = sanitizeSecrets(d.httpStatus),
+                    exceptionType = sanitizeSecrets(d.exceptionType),
+                    exceptionMessage = sanitizeSecrets(d.exceptionMessage),
+                    causes = sanitizeSecrets(d.causes),
+                    stackTrace = sanitizeSecrets(d.stackTrace),
+                )
+            }
+        val entry =
+            LogEntry(
+                at = now(),
+                message = sanitizedMsg,
+                isError = isError || errorDetails != null || type == LogType.ERROR,
+                errorDetails = sanitizedDetails,
+                type = if (isError || errorDetails != null) LogType.ERROR else type,
             )
-        }
-        val entry = LogEntry(
-            at = now(),
-            message = sanitizedMsg,
-            isError = isError || errorDetails != null || type == LogType.ERROR,
-            errorDetails = sanitizedDetails,
-            type = if (isError || errorDetails != null) LogType.ERROR else type,
-        )
         mutable.value = (listOf(entry) + mutable.value).take(retention)
         save()
     }
@@ -139,16 +153,17 @@ class EventLog internal constructor(
         val causesStr = causesList.joinToString("\n")
         val trace = throwable?.stackTraceToString().orEmpty()
 
-        val details = ErrorDetails(
-            operation = op.ifBlank { "Blink / monitoring operation" },
-            httpMethod = method.ifBlank { "N/A" },
-            url = callUrl.ifBlank { "N/A" },
-            httpStatus = statusText,
-            exceptionType = type,
-            exceptionMessage = exMsg,
-            causes = causesStr.ifBlank { "No underlying cause" },
-            stackTrace = trace,
-        )
+        val details =
+            ErrorDetails(
+                operation = op.ifBlank { "Blink / monitoring operation" },
+                httpMethod = method.ifBlank { "N/A" },
+                url = callUrl.ifBlank { "N/A" },
+                httpStatus = statusText,
+                exceptionType = type,
+                exceptionMessage = exMsg,
+                causes = causesStr.ifBlank { "No underlying cause" },
+                stackTrace = trace,
+            )
         add(message, isError = true, errorDetails = details)
     }
 
@@ -161,21 +176,23 @@ class EventLog internal constructor(
     private fun save() {
         val j = JSONArray()
         mutable.value.forEach { entry ->
-            val row = JSONObject()
-                .put("at", entry.at)
-                .put("message", entry.message)
-                .put("isError", entry.isError)
-                .put("type", entry.type.name)
+            val row =
+                JSONObject()
+                    .put("at", entry.at)
+                    .put("message", entry.message)
+                    .put("isError", entry.isError)
+                    .put("type", entry.type.name)
             entry.errorDetails?.let { d ->
-                val detailsObj = JSONObject()
-                    .put("operation", d.operation)
-                    .put("httpMethod", d.httpMethod)
-                    .put("url", d.url)
-                    .put("httpStatus", d.httpStatus)
-                    .put("exceptionType", d.exceptionType)
-                    .put("exceptionMessage", d.exceptionMessage)
-                    .put("causes", d.causes)
-                    .put("stackTrace", d.stackTrace)
+                val detailsObj =
+                    JSONObject()
+                        .put("operation", d.operation)
+                        .put("httpMethod", d.httpMethod)
+                        .put("url", d.url)
+                        .put("httpStatus", d.httpStatus)
+                        .put("exceptionType", d.exceptionType)
+                        .put("exceptionMessage", d.exceptionMessage)
+                        .put("causes", d.causes)
+                        .put("stackTrace", d.stackTrace)
                 row.put("errorDetails", detailsObj)
             }
             j.put(row)
@@ -192,11 +209,15 @@ class EventLog internal constructor(
             s = s.replace(Regex("(?i)Bearer\\s+[^\\s,;]+"), "Bearer [REDACTED]")
             s = s.replace(Regex("(https?://)[^/\\s@]+@"), "$1[REDACTED]@")
             s = s.replace(Regex("([?&][^=&#\\s]+=)[^&#\\s]*"), "$1[REDACTED]")
-            val keys = "password|passwd|pwd|access[_-]?token|refresh[_-]?token|id[_-]?token|token|csrf[_-]?token|csrf|2fa[_-]?code|code|otp|code[_-]?verifier|client[_-]?secret|secret|cookie|authorization"
-            s = s.replace(
-                Regex("""(?i)(["']?(?:$keys)["']?\s*[:=]\s*)("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^&;\s,}]+)"""),
-                "$1[REDACTED]",
-            )
+            val keys =
+                "password|passwd|pwd|access[_-]?token|refresh[_-]?token|id[_-]?token|token|" +
+                    "csrf[_-]?token|csrf|2fa[_-]?code|code|otp|code[_-]?verifier|" +
+                    "client[_-]?secret|secret|cookie|authorization"
+            s =
+                s.replace(
+                    Regex("""(?i)(["']?(?:$keys)["']?\s*[:=]\s*)("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^&;\s,}]+)"""),
+                    "$1[REDACTED]",
+                )
             return s
         }
     }
