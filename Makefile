@@ -34,7 +34,7 @@ COLOR_ERROR :=
 COLOR_RESET :=
 endif
 
-.PHONY: help test test-one lint check debug build release-apk install clean tasks push release
+.PHONY: help fmt test test-one lint check debug build release-apk install clean tasks push release
 
 help:
 	@set -euo pipefail
@@ -46,10 +46,11 @@ help:
 	fi
 	printf '%b%s%b\n\n' '$(COLOR_SUCCESS)' 'Blink Sentinel' '$(COLOR_RESET)'
 	printf '%b%s%b\n' '$(COLOR_INFO)' '🛠️  Android development' '$(COLOR_RESET)'
+	printf '%b  🧹 %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make fmt' '$(COLOR_RESET)' 'Format Kotlin and Kotlin DSL source files'
 	printf '%b  🧪 %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make test' '$(COLOR_RESET)' 'Run JVM unit tests'
 	printf '%b  🎯 %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make test-one TEST=package.TestName' '$(COLOR_RESET)' 'Run one JVM test class'
 	printf '%b  🔎 %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make lint' '$(COLOR_RESET)' 'Run Android lint'
-	printf '%b  ✅ %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make check' '$(COLOR_RESET)' 'Run tests and lint'
+	printf '%b  ✅ %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make check' '$(COLOR_RESET)' 'Format code, run tests, and lint'
 	printf '%b  📋 %-39s%b %s\n\n' '$(COLOR_SUCCESS)' 'make tasks' '$(COLOR_RESET)' 'List Gradle tasks'
 	printf '%b%s%b\n' '$(COLOR_INFO)' '📦 Build and install' '$(COLOR_RESET)'
 	printf '%b  🐞 %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make debug' '$(COLOR_RESET)' 'Build the debug APK'
@@ -59,18 +60,41 @@ help:
 	printf '%b  🧹 %-39s%b %s\n\n' '$(COLOR_SUCCESS)' 'make clean' '$(COLOR_RESET)' 'Remove Gradle build outputs'
 	printf '%b%s%b\n' '$(COLOR_INFO)' '🚀 GitHub publishing' '$(COLOR_RESET)'
 	printf '%b  ⬆️  %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make push' '$(COLOR_RESET)' 'Commit changes and push the current branch'
-	printf '%b  🏷️  %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make release VERSION=0.1.0' '$(COLOR_RESET)' 'Build and publish a tagged APK release'
+	printf '%b  🏷️  %-39s%b %s\n' '$(COLOR_SUCCESS)' 'make release VERSION=0.1.0 JKS_FILE=/path/key.jks' '$(COLOR_RESET)' 'Format, test, sign, and publish a release APK'
 	printf '%b  ❔ %-39s%b %s\n\n' '$(COLOR_SUCCESS)' 'make help' '$(COLOR_RESET)' 'Show this help'
-	printf '%b%s%b\n' '$(COLOR_WARN)' 'Example: make push GIT_REPO=OWNER/REPOSITORY GIT_BRANCH=main GIT_REMOTE=origin' '$(COLOR_RESET)'
-	printf '%b%s%b\n' '$(COLOR_WARN)' 'By default, push and release use GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git; GIT_REPO overrides it for push.' '$(COLOR_RESET)'
-	printf '%b%s%b\n' '$(COLOR_WARN)' 'Optional: GIT_BRANCH=main GIT_REMOTE=origin GIT_COMMIT_MESSAGE="message".' '$(COLOR_RESET)'
-	printf '%b%s%b\n' '$(COLOR_WARN)' 'Create an empty GitHub repository and authenticate with gh auth login first.' '$(COLOR_RESET)'
+	printf '%b%s%b\n' '$(COLOR_INFO)' '💡 Examples' '$(COLOR_RESET)'
+	printf '  ⬆️  Push the current branch to the default repository:\n    make push\n\n'
+	printf '  📂 Push to another repository (main must be checked out):\n    make push %bGIT_REPO%b=OWNER/REPOSITORY %bGIT_BRANCH%b=main %bGIT_REMOTE%b=origin\n\n' '$(COLOR_WARN)' '$(COLOR_RESET)' '$(COLOR_WARN)' '$(COLOR_RESET)' '$(COLOR_WARN)' '$(COLOR_RESET)'
+	printf '  🏷️  Sign and publish a release:\n    make release %bVERSION%b=0.1.0 %bJKS_FILE%b=/secure/path/release.jks %bJKS_ALIAS%b=release\n\n' '$(COLOR_WARN)' '$(COLOR_RESET)' '$(COLOR_WARN)' '$(COLOR_RESET)' '$(COLOR_WARN)' '$(COLOR_RESET)'
+	printf '  🧪 Run one test class:\n    make test-one %bTEST%b=dev.homesentinel.PresenceMachineTest\n\n' '$(COLOR_WARN)' '$(COLOR_RESET)'
+	printf '%b%s%b\n' '$(COLOR_INFO)' '⚙️  Publishing variables' '$(COLOR_RESET)'
+	printf '  %b%-20s%b %s\n' '$(COLOR_WARN)' 'GIT_MAIN_REPO' '$(COLOR_RESET)' 'Default push/release repository: https://github.com/0x00F6/blink-sentinel.git'
+	printf '  %b%-20s%b %s\n' '$(COLOR_WARN)' 'GIT_REPO' '$(COLOR_RESET)' 'Override the repository for push; release uses GIT_MAIN_REPO.'
+	printf '  %b%-20s%b %s\n' '$(COLOR_WARN)' 'GIT_BRANCH' '$(COLOR_RESET)' 'Optional; must match the checked-out branch.'
+	printf '  %b%-20s%b %s\n' '$(COLOR_WARN)' 'GIT_REMOTE' '$(COLOR_RESET)' 'Remote name (default: origin); URL must match the destination.'
+	printf '  %b%-20s%b %s\n' '$(COLOR_WARN)' 'GIT_COMMIT_MESSAGE' '$(COLOR_RESET)' 'Optional automatic commit message.'
+	printf '  %b%-20s%b %s\n' '$(COLOR_WARN)' 'VERSION' '$(COLOR_RESET)' 'Required for release; use MAJOR.MINOR.PATCH.'
+	printf '  %b%-20s%b %s\n' '$(COLOR_WARN)' 'JKS_FILE' '$(COLOR_RESET)' 'Required release keystore path; may be exported in your shell.'
+	printf '  %b%-20s%b %s\n\n' '$(COLOR_WARN)' 'JKS_ALIAS' '$(COLOR_RESET)' 'Optional; otherwise prompted. Passwords are always prompted securely.'
+	printf '%b%s%b\n' '$(COLOR_INFO)' '🔧 Before publishing' '$(COLOR_RESET)'
+	printf '  1. Create the GitHub repository and run gh auth login.\n'
+	printf '  2. Check the remote URL and Git identity (see README.md).\n'
+	printf '  3. For release, create a signing keystore (see README.md).\n\n'
+	printf '  🎨 Disable colors: %bNO_COLOR%b= make help\n' '$(COLOR_WARN)' '$(COLOR_RESET)'
 
 test:
 	@set -euo pipefail
 	if ! ./gradlew testDebugUnitTest; then
 		printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ JVM unit tests failed.' '$(COLOR_RESET)' >&2
 		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 Fix the failing test or setup issue above, then retry with: ./gradlew testDebugUnitTest --stacktrace' '$(COLOR_RESET)' >&2
+		exit 1
+	fi
+
+fmt:
+	@set -euo pipefail
+	if ! ./gradlew ktlintFormat; then
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ Kotlin formatting failed.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 Check Gradle/plugin resolution and formatter output above, then retry make fmt.' '$(COLOR_RESET)' >&2
 		exit 1
 	fi
 
@@ -97,7 +121,7 @@ lint:
 		exit 1
 	fi
 
-check: test lint
+check: fmt test lint
 
 debug:
 	@set -euo pipefail
@@ -211,8 +235,10 @@ push:
 		exit 1
 	fi
 	if ! git diff --cached --quiet; then
-		if ! git var GIT_AUTHOR_IDENT >/dev/null 2>&1; then
-			error 'Git author identity is not configured, so the changes cannot be committed.' 'Run git config --global user.name "Your Name" and git config --global user.email "you@example.com", then retry.'
+		author_name="$$(git config user.name || true)"
+		author_email="$$(git config user.email || true)"
+		if [[ "$$author_name" != "0x00F6" || "$$author_email" != "0x951475369@protonmail.com" ]]; then
+			error "Git identity must be 0x00F6 <0x951475369@protonmail.com>; configured identity is '$$author_name <$$author_email>'." 'Set the repository identity with git config user.name "0x00F6" and git config user.email "0x951475369@protonmail.com", then retry.'
 			exit 1
 		fi
 		if ! git commit -m "$$PUBLISH_COMMIT_MESSAGE"; then
@@ -249,6 +275,68 @@ release:
 		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Use GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git.' '$(COLOR_RESET)' >&2
 		exit 2
 	fi
+	if [[ -z "$${JKS_FILE:-}" ]]; then
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: JKS_FILE is required to sign an installable GitHub release APK.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Run make release VERSION=0.1.0 JKS_FILE=/secure/path/blink-sentinel-release.jks; the keystore password will be prompted securely.' '$(COLOR_RESET)' >&2
+		exit 2
+	fi
+	jks_file="$$JKS_FILE"
+	if [[ ! -f "$$jks_file" ]]; then
+		printf '%b%s%b\n' '$(COLOR_ERROR)' "❌ ERROR: Keystore file '$$jks_file' does not exist or is not a regular file." '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Check JKS_FILE and pass the path to your existing .jks or .keystore file.' '$(COLOR_RESET)' >&2
+		exit 2
+	fi
+	keytool_bin="$$(command -v keytool || true)"
+	if [[ -z "$$keytool_bin" && -n "$${JAVA_HOME:-}" && -x "$$JAVA_HOME/bin/keytool" ]]; then
+		keytool_bin="$$JAVA_HOME/bin/keytool"
+	fi
+	if [[ -z "$$keytool_bin" ]]; then
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: keytool is unavailable; the JDK is required to validate the signing keystore.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Install/configure the project JDK and ensure its bin directory is on PATH.' '$(COLOR_RESET)' >&2
+		exit 1
+	fi
+	printf '%b%s%b\n' '$(COLOR_INFO)' '🧹 Running Kotlin formatting, all JVM unit tests, and Android lint before release...' '$(COLOR_RESET)'
+	if ! $(MAKE) --no-print-directory check; then
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: Release preflight failed during formatting, tests, or lint.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Fix the reported issue, run make check successfully, then retry make release.' '$(COLOR_RESET)' >&2
+		exit 1
+	fi
+	if ! IFS= read -r -s -p 'Keystore password: ' BLINK_SENTINEL_JKS_STORE_PASSWORD < /dev/tty; then
+		printf '\n%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: Could not read the keystore password from the terminal.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Run make release from an interactive terminal.' '$(COLOR_RESET)' >&2
+		exit 1
+	fi
+	printf '\n'
+	export BLINK_SENTINEL_JKS_STORE_PASSWORD
+	key_alias="$${JKS_ALIAS:-}"
+	if [[ -z "$$key_alias" ]]; then
+		if ! IFS= read -r -p 'Keystore key alias: ' key_alias < /dev/tty || [[ -z "$$key_alias" ]]; then
+			printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: No signing key alias was provided.' '$(COLOR_RESET)' >&2
+			printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Set JKS_ALIAS=your-key-alias or enter the alias when prompted.' '$(COLOR_RESET)' >&2
+			exit 1
+		fi
+	fi
+	export BLINK_SENTINEL_JKS_KEY_ALIAS="$$key_alias"
+	if ! "$$keytool_bin" -list -keystore "$$jks_file" -storepass:env BLINK_SENTINEL_JKS_STORE_PASSWORD -alias "$$key_alias" >/dev/null 2>&1; then
+		printf '%b%s%b\n' '$(COLOR_ERROR)' "❌ ERROR: The keystore password is incorrect or alias '$$key_alias' is missing." '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Check the keystore password and key alias, then retry.' '$(COLOR_RESET)' >&2
+		exit 1
+	fi
+	if ! IFS= read -r -s -p 'Private key password (press Enter to reuse keystore password): ' BLINK_SENTINEL_JKS_KEY_PASSWORD < /dev/tty; then
+		printf '\n%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: Could not read the private key password from the terminal.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Run make release from an interactive terminal.' '$(COLOR_RESET)' >&2
+		exit 1
+	fi
+	printf '\n'
+	if [[ -z "$$BLINK_SENTINEL_JKS_KEY_PASSWORD" ]]; then
+		BLINK_SENTINEL_JKS_KEY_PASSWORD="$$BLINK_SENTINEL_JKS_STORE_PASSWORD"
+	fi
+	export BLINK_SENTINEL_JKS_KEY_PASSWORD
+	export BLINK_SENTINEL_JKS_FILE="$$jks_file"
+	clear_signing_secrets() {
+		unset BLINK_SENTINEL_JKS_STORE_PASSWORD BLINK_SENTINEL_JKS_KEY_PASSWORD BLINK_SENTINEL_JKS_KEY_ALIAS BLINK_SENTINEL_JKS_FILE
+	}
+	trap clear_signing_secrets EXIT
 	gradle_file="app/build.gradle.kts"
 	version_name_count="$$(grep -Ec '^[[:space:]]*versionName = "[^"]+"[[:space:]]*$$' "$$gradle_file" || true)"
 	if [[ "$$version_name_count" != 1 ]]; then
@@ -268,7 +356,6 @@ release:
 	else
 		printf '%b%s%b\n' '$(COLOR_INFO)' "ℹ️  Android versionName in $$gradle_file is already $$version; no file change needed." '$(COLOR_RESET)'
 	fi
-	$(MAKE) --no-print-directory push GIT_REPO="$$main_repo" git_branch="$$PUBLISH_GIT_BRANCH" git_remote="$$PUBLISH_GIT_REMOTE" git_commit_message="$$PUBLISH_COMMIT_MESSAGE"
 	tag="v$$version"
 	if git tag --list "$$tag" | grep -Fxq "$$tag" || gh release view "$$tag" --repo "$$repo" >/dev/null 2>&1; then
 		printf '%b%s%b\n' '$(COLOR_ERROR)' "❌ ERROR: Release tag '$$tag' already exists locally or on GitHub." '$(COLOR_RESET)' >&2
@@ -281,23 +368,38 @@ release:
 		exit 1
 	fi
 	printf '%b%s%b\n' '$(COLOR_INFO)' 'ℹ️  Building the Android release APK...' '$(COLOR_RESET)'
-	if ! ./gradlew assembleRelease; then
+	if ! ./gradlew --no-daemon assembleRelease; then
+		clear_signing_secrets
 		printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: Gradle failed to assemble the release APK.' '$(COLOR_RESET)' >&2
-		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Resolve the first Gradle error above; verify JDK 21, Android SDK platform 35, and Build-Tools 35.0.0, then run make release-apk.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Check the JDK/SDK setup, keystore access, alias and passwords; then retry with the same JKS_FILE.' '$(COLOR_RESET)' >&2
 		exit 1
 	fi
+	clear_signing_secrets
+	trap - EXIT
 	apk="app/build/outputs/apk/release/app-release.apk"
 	if [[ ! -f "$$apk" ]]; then
-		apk="app/build/outputs/apk/release/app-release-unsigned.apk"
-	fi
-	if [[ ! -f "$$apk" ]]; then
-		printf '%b%s%b\n' '$(COLOR_ERROR)' "❌ ERROR: No release APK was found in app/build/outputs/apk/release/." '$(COLOR_RESET)' >&2
-		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Inspect the Gradle output above and run make release-apk to diagnose the local APK build.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: Gradle did not produce the signed release APK app/build/outputs/apk/release/app-release.apk.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Confirm the release signing configuration in app/build.gradle.kts and inspect the Gradle output above.' '$(COLOR_RESET)' >&2
 		exit 1
 	fi
-	if [[ "$$apk" == *unsigned.apk ]]; then
-		printf '%b%s%b\n' '$(COLOR_WARN)' '⚠️  This release APK is unsigned; configure local release signing before distribution.' '$(COLOR_RESET)' >&2
+	apksigner="$(command -v apksigner || true)"
+	if [[ -z "$$apksigner" ]]; then
+		sdk_path="$${ANDROID_HOME:-$${ANDROID_SDK_ROOT:-}}"
+		if [[ -z "$$sdk_path" && -f local.properties ]]; then
+			sdk_path="$$(sed -nE 's/^sdk\.dir=(.*)$$/\1/p' local.properties | head -n 1)"
+		fi
+		if [[ -d "$$sdk_path/build-tools" ]]; then
+			for candidate in "$$sdk_path"/build-tools/*/apksigner; do
+				if [[ -x "$$candidate" ]]; then apksigner="$$candidate"; fi
+			done
+		fi
 	fi
+	if [[ -z "$$apksigner" ]] || ! "$$apksigner" verify --verbose "$$apk" >/dev/null 2>&1; then
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '❌ ERROR: The release APK failed signature verification.' '$(COLOR_RESET)' >&2
+		printf '%b%s%b\n' '$(COLOR_ERROR)' '💡 SOLUTION: Check JKS_FILE, alias, and both passwords; install Android SDK Build-Tools so apksigner is available, then retry.' '$(COLOR_RESET)' >&2
+		exit 1
+	fi
+	$(MAKE) --no-print-directory push GIT_REPO="$$main_repo" git_branch="$$PUBLISH_GIT_BRANCH" git_remote="$$PUBLISH_GIT_REMOTE" git_commit_message="$$PUBLISH_COMMIT_MESSAGE"
 	if ! gh release create "$$tag" "$$apk#Blink-Sentinel-$$version.apk" \
 		--repo "$$repo" \
 		--target "$$(git rev-parse HEAD)" \

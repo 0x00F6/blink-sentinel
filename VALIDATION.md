@@ -139,7 +139,11 @@ No new source-delivery archive was created for this modification of the existing
 
 The launcher and in-app title use **Blink Sentinel**. The Home screen's Appearance section lets users choose Dark or Light and stores the setting in Preferences DataStore; a missing or invalid value selects Dark. The active monitoring indicator pulses, stopped monitoring uses the red Presence card, and Blink state labels highlight Armed in bold green and Disarmed in yellow. The application ID and encrypted-session key context remain unchanged for existing installations.
 
-The Makefile supports `make push` and `make release VERSION=0.1.0`; it initializes Git on first use and uses the GitHub CLI for an existing repository. The release command updates and logs the Android `versionName` in `app/build.gradle.kts`, so subsequent local builds use the same version; it commits and pushes the version change, creates the matching `vVERSION` tag, and attaches the generated APK. The `.gitignore` excludes local SDK and signing files. A release build without owner-provided local signing is unsigned and requires signing before distributing an installable production APK.
+The Makefile supports `make push` and `make release VERSION=0.1.2 JKS_FILE=/path/to/release.jks`; it initializes Git on first use and uses the GitHub CLI for an existing repository. Before a release, `make check` runs Kotlin formatting, all JVM unit tests, and Android lint. The release command prompts without echo for the keystore and key passwords, updates and logs the Android `versionName` in `app/build.gradle.kts`, signs the release variant, verifies the APK signature with `apksigner`, commits and pushes the version change, creates the matching `vVERSION` tag, and attaches the signed APK. `.gitignore` excludes local SDK paths and signing files. Keystores and passwords must remain local and backed up securely.
+
+### Release signing and preflight configuration
+
+The Gradle task graph was loaded with `./gradlew tasks --all --no-daemon`; root and app `ktlintFormat`/`ktlintCheck` tasks were present. `./gradlew help --no-daemon` also configured the release signing block with temporary environment values; no APK was produced with those dummy values. `make release VERSION=0.1.2` correctly stops with a detailed error when `JKS_FILE` is omitted. `git diff --check` passes. The Kotlin formatter, unit tests, lint, real-keystore signing, and GitHub upload were not run for this configuration change; `make release` now runs the first three automatically before prompting for credentials or changing the version.
 
 This update was compiled with:
 
@@ -163,3 +167,14 @@ Result: **BUILD SUCCESSFUL**. The first attempt without `JAVA_HOME` stopped befo
 8. Validate real Blink OAuth/2FA, network DNS/TLS, availability of `rest-e005.immedia-semi.com`, actual command confirmation, and cloud latency against the official app.
 
 Bluetooth without Location is offered **only on Android 12+**, for a BLE device that advertises regularly with a stable address. Android 10/11 retain Wi-Fi mode. A build and simulated tests do not validate background radio delivery or the unofficial protocol on a live Blink account. Follow the real-phone scenarios in README before relying on automatic camera control.
+
+
+## Documentation walkthrough and Makefile help (2026-10-03)
+
+- Built the application and separate capture APK with `./gradlew assembleDebug assembleDebugAndroidTest` using JBR 21.0.11: passed.
+- Formatted only the capture source with `./gradlew :app:runKtlintFormatOverAndroidTestSourceSet`, then rebuilt with `./gradlew assembleDebugAndroidTest`: passed.
+- Ran `ANDROID_HOME=/home/o/Android/Sdk python3 tools/capture_screenshots.py --serial emulator-5582` on a newly created, isolated Android 17 / API 37 emulator: fourteen 1080 × 2400 renders exported. Visually inspected the new 2FA and system-picker views.
+- Authentication screenshots use memory-only UI fixtures in the separate instrumentation APK. No login/verification request, credentials, authenticated vault session, sensor evidence, or camera command was used. DEMO system states are illustrative; this is not live Blink authentication validation.
+- The runner exercised error opening, copying, closing, and log-retention settings, then reset authentication UI fixtures and cleared DEMO journal entries. The existing emulator containing a Blink session was rejected and its data was preserved; no physical phone was used.
+- Verified every Makefile target is documented, relative Markdown links resolve, and all fourteen PNG dimensions/signatures are valid. Checked `env -u NO_COLOR make help` and `NO_COLOR= make help`: variables have ANSI colors only when colors are enabled; emojis remain in both cases. `git diff --check` passed.
+- No Git push, release publication, or real-device behavior validation was performed for these documentation changes.

@@ -1,6 +1,6 @@
 # Application screenshots
 
-These ten PNG files are actual renders of `MainActivity` and its Compose interface on an isolated Android 17 / API 37 emulator at 1080 × 2400 pixels. They show an unconfigured installation without Blink credentials or radio devices. The light and dark views cover Home, Network, Blink, Event log, and Error details. Journal entries prefixed **[DEMO]** are synthetic documentation fixtures for a network error and signal events. They never change presence or camera state, and no network request is made. Production does not create these fixtures.
+These fourteen PNG files are actual renders of `MainActivity` and its Compose interface on an isolated Android 17 / API 37 emulator at 1080 × 2400 pixels. They show an unconfigured installation without Blink credentials or radio devices. The light and dark views cover Home, Network, Blink sign-in, 2FA, system selection, Event log, and Error details. The 2FA and system-selection screens use documentation-only UI state fixtures; names and example statuses are labeled **[DEMO]**. They do not represent a successful login or real camera states, and no credentials or verification codes are used. Journal entries prefixed **[DEMO]** are synthetic documentation fixtures for a network error and signal events. They never change presence or camera state, and no network request is made. Production does not create these fixtures.
 
 The light theme uses navy, teal, and white. The dark views show the terminal-inspired theme: near-black surfaces, neon green/cyan accents, monospace headings, thin borders, a static grid, and framed navigation icons.
 
@@ -19,9 +19,9 @@ With a compatible JDK, SDK, and `adb` available:
 ```bash
 ./gradlew assembleDebug assembleDebugAndroidTest
 adb devices
-python3 tools/capture_screenshots.py --serial emulator-5580
+python3 tools/capture_screenshots.py --serial emulator-5582
 ```
 
-Replace `emulator-5580` with the explicitly selected emulator serial. `adb` must be on `PATH`, or `ANDROID_HOME` / `ANDROID_SDK_ROOT` must point to the SDK. The script installs the application and its separate instrumentation APK, captures all ten views, validates the PNG files, and updates this directory. It does not clear app data, sign into Blink, or enable monitoring. It seeds the temporary DEMO entries only after checking the journal is empty, exercises error opening/copying/closing and the default-retention settings dialog, then clears its fixtures. The emulator finishes with the application in dark mode.
+Replace `emulator-5582` with the explicitly selected emulator serial. `adb` must be on `PATH`, or `ANDROID_HOME` / `ANDROID_SDK_ROOT` must point to the SDK. The script installs the application and its separate instrumentation APK, captures all fourteen views, validates the PNG files, and updates this directory. It does not clear app data, sign into Blink, or enable monitoring. It sets temporary authentication UI states in memory and seeds the DEMO entries only after checking the journal is empty, exercises error opening/copying/closing and the default-retention settings dialog, then resets its in-memory authentication states and clears the journal fixtures. It never creates or writes an authenticated session. The test APK uses reflection to set the private state flows; production contains no simulated-login hook. The emulator finishes with the application in dark mode.
 
 Screen capture validates rendering and tab navigation in this emulator only. It does not validate real Wi-Fi/BLE delivery, battery behavior, live authentication, or Blink command execution. See [VALIDATION.md](../../VALIDATION.md).

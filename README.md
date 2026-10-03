@@ -8,11 +8,14 @@ A native Android app built with Kotlin and Jetpack Compose. It arms the selected
 
 ## Contents
 
-- **📖 Overview:** [Motivation](#motivation) · [Highlights](#highlights) · [Screenshots](#screenshots) · [Quick start](#quick-start) · [Requirements](#requirements)
-- **🛠️ Setup and publishing:** [Open in Android Studio](#open-in-android-studio) · [Build and test](#build-and-test) · [Install](#install) · [GitHub publishing](#github-publishing)
-- **📡 Monitoring:** [Sensor selection](#sensor-selection-and-automatic-activation) · [Wi-Fi](#wi-fi-monitoring) · [Bluetooth](#bluetooth-without-location) · [Last signal](#last-received-signal) · [Estimated distance](#estimated-distances-and-sorting)
-- **🔔 Alerts and Android:** [Departure alerts](#silent-departure-alerts) · [Event log](#event-log-and-diagnostics) · [Battery access](#background-battery-access) · [Background service](#background-service-and-reboot) · [Permissions](#permissions)
-- **🔐 Project details:** [Blink integration and security](#blink-integration-and-security) · [Storage](#storage) · [Architecture](#architecture) · [Real-phone validation](#real-phone-validation) · [Artwork and notices](#artwork-and-notices) · [Changes](#changes-included-in-this-version) · [Technical sources](#technical-sources)
+- 🏠 [Motivation](#motivation) · [Highlights](#highlights)
+- 🚀 [Getting started](#getting-started): [Requirements](#requirements) · [Install](#install) · [Quick start](#quick-start) · [Blink account and 2FA](#connect-your-blink-account-and-complete-2fa)
+- 🎨 [Interface and themes](#interface-and-themes)
+- 📡 [Monitoring behavior](#monitoring-behavior): [Wi-Fi](#wi-fi-monitoring) · [Bluetooth](#bluetooth-without-location) · [Timestamps](#last-received-signal) · [Distances](#estimated-distances-and-sorting) · [Alerts](#silent-departure-alerts)
+- 🔋 [Android permissions and background operation](#android-permissions-and-background-operation) · [Event log and diagnostics](#event-log-and-diagnostics)
+- 🛠️ [Development](#development): [Android Studio](#open-in-android-studio) · [Makefile commands](#makefile-commands) · [Gradle](#build-and-test) · [Architecture](#architecture)
+- 📦 [GitHub publishing](#github-publishing): [Variables](#publishing-variables) · [Create a keystore](#create-a-signing-keystore) · [Release workflow](#what-make-release-does)
+- 🔐 [Blink integration and security](#blink-integration-and-security) · [Real-phone validation](#real-phone-validation) · [Project resources](#project-resources)
 
 ## Motivation
 
@@ -24,146 +27,103 @@ A native Android app built with Kotlin and Jetpack Compose. It arms the selected
 - 📡 **Bluetooth presence:** monitor compatible BLE advertisements on Android 12 and later, including with Location turned off.
 - 🏠 **Automatic Blink control:** arm after a delayed, freshly confirmed departure and optionally disarm when the sensor returns.
 - 🎨 **Personalized interface:** terminal-inspired dark theme by default, with a Light theme option and a matching app icon.
-- 🧾 **Useful diagnostics:** keep up to 500 configurable events, show errors in red with copyable technical details, and redact secrets.
+- 🧾 **Useful diagnostics:** keep 500 events by default with a configurable limit of 50–5000, show errors in red with copyable technical details, and redact secrets.
 - 🔔 **Quiet alerts:** use a silent monitoring notification and one handset vibration after confirmed departure; the app does not play audio.
 - 📏 **Signal estimates:** display indicative RSSI-based distance for sorting; these estimates never control automation.
 
-## Screenshots
+## Getting started
 
-Actual application views from an isolated Android 17 / API 37 emulator. The light theme uses navy, teal, and white; the dark theme follows the terminal-inspired visual reference with a near-black background (`#0A0A0A`), neon green (`#00FF88`), cyan (`#00D1FF`), monospace headings, thin frames, and outlined navigation icons. Choose **Dark** or **Light** in **Home → Appearance**; dark is the default. Presence colors always reflect the actual monitoring state.
+🚀 Set up the Blink account, home sensor, and Android access before relying on automatic control.
 
-🖼️ These examples show an unconfigured installation: no Blink account is connected, monitoring is stopped, and no home sensor has been selected. Journal entries marked **[DEMO]** are synthetic documentation fixtures, including an example network error and signal events. They do not change detection or camera state and are never inserted by the application. The captures demonstrate the real interface, not live Blink or real-device radio validation.
-
-### Light theme
-
-| Home | Network | Blink | Event log |
-| --- | --- | --- | --- |
-| ![Light Home screen showing unknown detection, Blink status, and automatic monitoring controls](docs/screenshots/home-light.png) | ![Light Network screen with Wi-Fi and Bluetooth mode selection and home Wi-Fi configuration](docs/screenshots/network-light.png) | ![Light Blink screen with empty email and password fields and encrypted session guidance](docs/screenshots/blink-light.png) | ![Light Event log with a red DEMO error and icons for detected and missing signals](docs/screenshots/event-log-light.png) |
-
-### Dark theme
-
-| Home | Network | Blink | Event log |
-| --- | --- | --- | --- |
-| ![Dark Home screen with a near-black background and neon green monitoring controls](docs/screenshots/home-dark.png) | ![Dark Network screen with terminal-style mode selection and Wi-Fi configuration](docs/screenshots/network-dark.png) | ![Dark Blink sign-in screen with neon borders and empty credential fields](docs/screenshots/blink-dark.png) | ![Dark Event log with a red DEMO error and typed event icons](docs/screenshots/event-log-dark.png) |
-
-### Error details
-
-| Light theme | Dark theme |
-| --- | --- |
-| ![Light error details showing the DEMO request context, original exception causes, and copy action](docs/screenshots/error-details-light.png) | ![Dark error details with a red heading and selectable scrollable technical information](docs/screenshots/error-details-dark.png) |
-
-Full-resolution images and regeneration instructions are in [docs/screenshots/README.md](docs/screenshots/README.md). The application uses a neon **b** adaptive icon inspired by the supplied reference, with a black background and a monochrome layer for themed icons. Original artwork and launcher resources remain included; the notification icon is retained. See [artwork/README.md](artwork/README.md).
-
-If Android Studio's experimental Markdown preview does not load the local images, see the [preview troubleshooting instructions](docs/screenshots/README.md#android-studio-markdown-preview). The PNG files can also be opened directly from `docs/screenshots/`.
-
-The interface, notifications, diagnostics, and documentation are in **English**, regardless of the phone's language. Device names, SSIDs, and Blink system names retain their original values. Dates use `yyyy-MM-dd HH:mm:ss` in the phone's local time zone; estimated distances use an English decimal point. Previously recorded event messages retain their original language.
-
-The project opens directly in Android Studio. A signed debug APK is provided at `dist/blink-sentinel-debug.apk` when included in the delivery.
-
-## Quick start
-
-1. 📦 Install the APK or build the project in Android Studio.
-2. 📡 In **Network → Monitoring mode**, choose **Wi-Fi** or **Bluetooth**. Changing mode stops monitoring; selecting a sensor enables it automatically when Blink and Android permissions are ready.
-3. 📍 For Wi-Fi, grant precise location and notification permissions in **Home → Android permissions**, enable Wi-Fi and Android Location, then search for and select the exact SSID in **Network**. For Bluetooth on Android 12+, grant **Nearby devices** and notifications, enable Bluetooth, search for up to 22 seconds, and choose a compatible BLE device. Android Location can remain off.
-4. 🔐 In **Blink**, enter your **Blink account** email address and password, followed by the verification code if requested. Select the system to automate; a single available system is selected automatically.
-5. ⏱️ Set the **Arming delay** between 10 and 600 seconds. The default is 30 seconds; **Disarm on return** is enabled by default. If a sensor was selected before Blink was ready, select it again or enable **Automatic monitoring** on Home.
-6. 🔋 In **Home → Android permissions → Background battery use**, tap **Allow unrestricted battery use** and confirm Android’s request if background monitoring is needed. On phones with an additional per-app battery setting, choose **Unrestricted**.
-7. ✅ Check the ongoing silent notification and event log. Test an actual departure and return, then confirm the state in the official Blink app.
-
-⚠️ **The arming delay is a minimum confirmation delay, not a guarantee of arming within that time.** Android can delay scans. Missing Android results never become proof of departure.
-
-## Requirements
+### Requirements
 
 - Android **10 / API 29 or later** with Wi-Fi. Permission and service branches cover Android 13, 14, 15, and 16, but the actual phone still needs testing.
 - Bluetooth without Location requires **Android 12 / API 31 or later**, a BLE-capable phone, and a compatible home device.
 - A Blink account with at least one system. Commands apply to a **system**, not individual cameras.
 - Internet access when commands run. Mobile data must reach Blink after leaving home.
-- Android Studio compatible with **Android Gradle Plugin 9.4.1**, a full compatible **JDK** (validated with JBR / OpenJDK **21.0.11**), SDK Platform **35**, Build-Tools **35.0.0** for the documented verification commands, **36.0.0** for the current AGP build, and Platform-Tools for `adb`.
-- Internet access for the first download of Gradle and Google Maven / Maven Central dependencies.
 
-Pinned versions: Kotlin 2.2.10, Compose BOM 2025.04.01, AGP 9.4.1, Gradle 9.6.0. Java/Kotlin bytecode targets Java 17; `compileSdk` and `targetSdk` are 35. AGP 9.4.1 selects Build-Tools 36.0.0 despite the retained `buildToolsVersion = "35.0.0"` declaration; both tool versions were available during validation.
+For the development toolchain, see [Development requirements](#development-requirements).
 
-## Open in Android Studio
+### Install
 
-If using a source archive:
+Install a signed release APK, when available in [GitHub Releases](https://github.com/0x00F6/blink-sentinel/releases). Transfer it to your phone, open it from a file manager, and allow installation from that source when Android asks. Application ID: `dev.homesentinel`; launcher name: **Blink Sentinel**.
 
-```bash
-tar -xzf blink-wifi-automation.tar.gz
-```
-
-Use **Open** and select the top-level `blink-wifi-automation` directory containing `settings.gradle.kts`, then wait for Gradle synchronization. Open the whole project, not just `app`.
-
-Under **Settings → Build, Execution, Deployment → Build Tools → Gradle**, select a compatible JDK. Install SDK Platform 35 and Build-Tools 35.0.0 in **SDK Manager**. Android Studio creates `local.properties` with your local SDK path; machine-specific SDK paths should not be distributed.
-
-Connect your phone, enable **Developer options → USB debugging**, accept the computer's RSA key, select the `app` module and phone, then choose **Run**.
-
-## Build and test
-
-The Makefile offers short commands for common Android development tasks. GNU Make, Bash, the Android SDK, and a compatible JDK are required. Run `make` or `make help` to list all targets.
-
-```bash
-make test                                      # Run JVM unit tests
-make test-one TEST=dev.homesentinel.PresenceMachineTest
-make lint                                      # Run Android lint
-make check                                     # Run unit tests and lint
-make debug                                     # Build the debug APK
-make build                                     # Run tests, lint, and build the debug APK
-make release-apk                               # Build a local release APK without publishing
-make install                                  # Install on a connected Android device
-make clean                                    # Remove Gradle build outputs
-make tasks                                    # List available Gradle tasks
-```
-
-GitHub publishing is separate from local builds: `make push GIT_BRANCH=main` commits and pushes the selected branch to `GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git` by default. Set `GIT_REPO=OWNER/REPOSITORY` to override the destination for a push. `make release VERSION=0.1.0` updates `versionName` in `app/build.gradle.kts` (and logs the old and new values), commits and pushes that change, creates the matching `v0.1.0` GitHub release, and uploads the APK. Subsequent local builds use the updated version from that file. Override the release destination with `GIT_MAIN_REPO=https://github.com/OWNER/REPOSITORY.git` when needed. The initial `versionName` is `1.0.0`.
-
-The same tasks can be run directly through the Gradle wrapper. Linux / macOS:
-
-```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug
-```
-
-Windows PowerShell:
-
-```powershell
-.\gradlew.bat testDebugUnitTest lintDebug assembleDebug
-```
-
-If the SDK is not detected, set `ANDROID_HOME` or create `local.properties`:
-
-```properties
-sdk.dir=/path/to/Android/Sdk
-```
-
-The debug APK is `app/build/outputs/apk/debug/app-debug.apk`, signed with the local debug key. Android Studio's **Build APK(s)** action produces the same kind of APK. `make release-apk` / `assembleRelease` produces an **unsigned** APK unless local release signing is configured. Use **Generate Signed Bundle / APK** for a personal distributable release, retain the same signing key for updates, and never commit it. A different signing key requires uninstalling the old app, which erases its settings and local session.
-
-## Install
-
-With USB debugging and `adb`:
+With USB debugging and `adb`, you can also install a local debug build:
 
 ```bash
 adb devices
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-For the delivered APK:
+If the source delivery includes `dist/blink-sentinel-debug.apk`:
 
 ```bash
 adb install -r dist/blink-sentinel-debug.apk
 ```
 
-Alternatively, transfer the APK to your phone, open it from a file manager, and allow installation from that source when Android asks. Application ID: `dev.homesentinel`; launcher name: **Blink Sentinel**.
+Keep the same signing key for app updates. Installing a build signed with another key requires uninstalling the existing app, which erases its settings and local session.
 
-## GitHub publishing
+### Quick start
 
-🚀 `Makefile` provides `make push GIT_BRANCH=main` to commit and push a branch to `GIT_MAIN_REPO=https://github.com/0x00F6/blink-sentinel.git` by default. Pass `GIT_REPO=OWNER/REPOSITORY` to override the push destination. `make release VERSION=0.1.0` updates and logs `versionName` in `app/build.gradle.kts`, then builds an APK and attaches it to a GitHub release tagged `v0.1.0`, using `GIT_MAIN_REPO` as its destination. Create the repository first, install and authenticate the GitHub CLI with `gh auth login`, and configure your Git author. These optional publishing targets require GNU Make and Bash; on Windows, the Gradle wrapper remains available directly. The Makefile and `.gitignore` keep local SDK paths and signing files out of Git; configure release signing locally before sharing an installable production APK. Run `make` or `make help` to view the commands.
+1. 📦 Install the APK or build the project in Android Studio.
+2. 📡 In **Network → Monitoring mode**, choose **Wi-Fi** or **Bluetooth**. Changing mode stops monitoring; selecting a sensor enables it automatically when Blink and Android permissions are ready.
+3. 📍 For Wi-Fi, grant precise location and notification permissions in **Home → Android permissions**, enable Wi-Fi and Android Location, then search for and select the exact SSID in **Network**. For Bluetooth on Android 12+, grant **Nearby devices** and notifications, enable Bluetooth, search for up to 22 seconds, and choose a compatible BLE device. Android Location can remain off.
+4. 🔐 [Connect your Blink account and complete 2FA](#connect-your-blink-account-and-complete-2fa), then select the system to automate; a single available system is selected automatically.
+5. ⏱️ Set the **Arming delay** between 10 and 600 seconds. The default is 30 seconds; **Disarm on return** is enabled by default. If a sensor was selected before Blink was ready, select it again or enable **Automatic monitoring** on Home.
+6. 🔋 In **Home → Android permissions → Background battery use**, tap **Allow unrestricted battery use** and confirm Android’s request if background monitoring is needed. On phones with an additional per-app battery setting, choose **Unrestricted**.
+7. ✅ Check the ongoing silent notification and event log. Test an actual departure and return, then confirm the state in the official Blink app.
 
-## Sensor selection and automatic activation
+🖼️ The screenshots throughout this guide are actual app renders from an isolated Android 17 / API 37 emulator. Monitoring is stopped; no home sensor or real Blink account is configured. Authentication states and journal entries labeled **[DEMO]** are documentation-only fixtures, not live camera states. They make no Blink requests and do not validate real-device radio behavior.
+
+| Steps 2–3: select your sensor | Step 4: connect Blink | Steps 5–6: configure Home | Step 7: review events |
+| --- | --- | --- | --- |
+| ![Network tab with Wi-Fi and Bluetooth mode selection and home sensor configuration](docs/screenshots/network-dark.png) | ![Blink tab with email and password fields for account sign-in](docs/screenshots/blink-dark.png) | ![Home tab with presence, Blink status, automatic monitoring, and arming delay controls](docs/screenshots/home-dark.png) | ![Event log with DEMO signal events and a red error with a details action](docs/screenshots/event-log-dark.png) |
+
+For the verification-code screen and system picker, see [Blink account and 2FA](#connect-your-blink-account-and-complete-2fa). In Home, scroll to **Android permissions → Background battery use** for step 6.
+
+⚠️ **The arming delay is a minimum confirmation delay, not a guarantee of arming within that time.** Android can delay scans. Missing Android results never become proof of departure.
+
+### Connect your Blink account and complete 2FA
+
+🔐 Use the credentials of your existing Blink account, which must contain at least one system. Keep your phone connected to the Internet during sign-in.
+
+1. Open the **Blink** tab in Blink Sentinel.
+2. Enter your account email in **Blink email address** and your password in **Blink password**, then tap **Sign in to Blink**. Signing in stops automatic monitoring while authentication is in progress.
+3. If Blink requests two-factor authentication (**2FA**), retrieve the verification code sent by Blink. Enter it in **Verification code** and tap **Verify code**. If no verification is required, the app proceeds directly to the system list.
+4. After authentication succeeds, the section displays **Signed in to Blink**. Choose the Blink system to automate; a single available system is selected automatically. Tap **Refresh systems** if you need to reload the list. Only the selected system is controlled.
+5. Return to [Quick start](#quick-start) to configure the sensor and activate monitoring. Compare the displayed system state with the official Blink app before relying on automation.
+
+| Enter the 2FA code — Dark | Choose a system — Dark |
+| --- | --- |
+| ![Dark Blink verification screen with an empty code field and restart sign-in action](docs/screenshots/blink-2fa-dark.png) | ![Dark Blink system picker with DEMO Home and Garage systems](docs/screenshots/blink-systems-dark.png) |
+
+The system names and statuses above are simulated UI examples. For the initial email/password screen, see [Quick start](#quick-start).
+
+If the code expires or verification fails, tap **Restart sign-in**, enter your credentials again, and use the new code supplied by Blink. For connection errors, open **Event log → View error details** to inspect the sanitized diagnostic information. The integration uses an unofficial mobile API; see [Blink integration and security](#blink-integration-and-security) for its limitations.
+
+Passwords and verification codes are not saved. The authenticated session is stored encrypted using Android Keystore. **Sign out of Blink** clears the local session and stops monitoring; signing in again may require another verification code.
+
+## Interface and themes
+
+🎨 Choose **Dark** or **Light** in **Home → Appearance**. Dark is the default: near-black surfaces (`#0A0A0A`), neon green (`#00FF88`), cyan (`#00D1FF`), monospace headings, thin frames, and outlined icons. The light theme uses navy, teal, and white. This guide illustrates the dark theme; see the screens in [Quick start](#quick-start).
+
+The monitoring indicator pulses while active; stopped monitoring uses a red Presence card. Home displays **Armed** in bold neon green and **Disarmed** in yellow. The header and launcher use the neon **b** icon.
+
+The interface, notifications, diagnostics, and documentation are in **English**, regardless of the phone's language. External SSIDs, device/system names, and historical log messages retain their original values. Dates use `yyyy-MM-dd HH:mm:ss` in local time; distances use an English decimal point.
+
+Full-resolution captures, regeneration, and Android Studio Markdown preview troubleshooting are in [docs/screenshots/README.md](docs/screenshots/README.md).
+
+## Monitoring behavior
+
+📡 Automatic decisions use fresh radio evidence from the selected sensor. Selecting a sensor, losing an Internet connection, or reaching a timer deadline is not proof that you left home.
+
+### Sensor selection and automatic activation
 
 Selecting a Wi-Fi network, using a manually entered SSID, or choosing a Bluetooth device saves the target and starts monitoring with the existing silent notification. Any Bluetooth discovery is stopped first. A Blink session, selected Blink system, and the chosen mode's Android permissions are required. If a prerequisite is missing or Android refuses startup, the selection is retained, monitoring is disabled, and an actionable message is shown. Correct the prerequisite, then select the sensor again or enable monitoring on Home.
 
 Changing the sensor requires fresh observations. Selecting a device never establishes presence or absence by itself, and does not bypass the arming delay.
 
-## Wi-Fi monitoring
+### Wi-Fi monitoring
 
 `WifiScanReceiver` dynamically listens for `SCAN_RESULTS_AVAILABLE_ACTION`. On Android 10+, this includes full scans performed by Android or other apps, allowing passive listening. Presence means visibility of the **exact, case-sensitive configured SSID**, regardless of whether the phone is connected to it. `ConnectivityManager` requests scans after connection changes and retries commands when Internet access returns; losing a connection or disabling Wi-Fi does not prove departure.
 
@@ -189,7 +149,7 @@ The Wi-Fi selection list loads cached results younger than 60 seconds on opening
 
 One-off scans are requested when monitoring starts, connectivity changes, the screen wakes, and the absence delay ends. **Supplemental scans** optionally request a scan every two minutes; this is off by default and remains subject to Android throttling.
 
-### Android limitations
+#### Android limitations
 
 Foreground apps can generally request four scans in two minutes; background apps share a much stricter limit, generally one scan every thirty minutes. A foreground service keeps the process visible and supports permitted location access; it does not bypass quotas, Doze, or manufacturer restrictions.
 
@@ -197,7 +157,7 @@ An ordinary app **cannot guarantee immediate, continuous SSID detection while th
 
 Hidden SSIDs are unsuitable for reliable name-based monitoring. Access points sharing a name count as the same home. An SSID does not authenticate a home or person: an impersonated SSID can trigger presence and disarming. Monitoring follows this phone, not multiple occupants.
 
-## Bluetooth without Location
+### Bluetooth without Location
 
 This mode requires **Android 12 / API 31+**, BLE support, and `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT` permissions in **Nearby devices**. `BLUETOOTH_SCAN` declares `neverForLocation`; neither location permission nor the Location switch is required. Android 10/11 require Location for ordinary BLE scanning, so this app offers only Wi-Fi mode on those versions.
 
@@ -217,13 +177,13 @@ Advertisement timestamps are monotonic, converted from nanoseconds to millisecon
 
 After startup, restart, or a window delayed by more than twenty seconds, detection remains `UNKNOWN` until a real advertisement is received. Starting while away therefore requires a detected return before another departure decision. Bluetooth off, revoked permission, or an explicit scanner error means unknown, with no arming. Radio silence can also mean power loss or interference; it does not guarantee a person's absence.
 
-## Last received signal
+### Last received signal
 
 **Home → Automatic detection → Last signal received** shows the last actual reception of the chosen SSID/device as **yyyy-MM-dd HH:mm:ss** in the phone's local time zone. It is the phone's reception timestamp, not the transmitter's clock. Android monotonic timestamps are converted to wall-clock time on receipt.
 
 The timestamp does not advance on absence, timers, duplicate results, or a BLE window without a new advertisement. It remains visible during absence or sensor unavailability and after stopping the service in the same process. Changing sensor/mode or restarting monitoring clears it. It is not persisted and never replays an arming decision.
 
-## Estimated distances and sorting
+### Estimated distances and sorting
 
 Wi-Fi, BLE, and classic Bluetooth lists show **estimated distance in meters** from received RSSI, sorted nearest first. Missing/invalid RSSI shows **Estimated distance: unavailable** and sorts last. BLE and classic devices are sorted together; their types remain visible. Distances update with discovery observations.
 
@@ -235,7 +195,7 @@ d = 10^((assumed RSSI at 1 m − received RSSI) / (10 × 2.5))
 
 Assumed references are −40 dBm for Wi-Fi and −59 dBm for Bluetooth. Transmit power, walls, band, and antennas can substantially distort values and ranking. BLE transmit power is not treated as calibrated RSSI at one meter. For a shared SSID, the strongest access point is used. No GPS or additional permission is involved. Distances affect only display, never presence or arming decisions.
 
-## Silent departure alerts
+### Silent departure alerts
 
 Notifications use **Silent Wi-Fi / Bluetooth monitoring**, configured with no sound and no automatic vibration on updates. The channel has a new ID to avoid inheriting older default sound settings retained by Android. The app does not play audio.
 
@@ -245,31 +205,11 @@ Following an observed `HOME`, confirmed `AWAY` triggers **one 300 ms vibration o
 
 Test with headphones connected: confirmed departure gives one handset vibration and no app sound; rapid return gives none; repeated `AWAY` updates do not repeat it. Also test with the screen locked, silent mode, and Do Not Disturb.
 
-## Event log and diagnostics
+## Android permissions and background operation
 
-Errors appear **in red with a date, warning icon, and explicit message**, inside a red framed card. Tap the card or **View error details** for scrollable, selectable, copyable details: operation, HTTP method, actual request URL, HTTP status, exception type/message, causes, and full stack trace. Failure before a response shows **No HTTP status received**. Interrupted reads after headers retain the received status. Parsing failures remain associated with their request.
+🔋 Configure access in **Home → Android permissions**. Background operation depends on Android and manufacturer restrictions, even after a battery exemption.
 
-The persistent log keeps **500 entries by default**, newest first. Open **Event log → Log settings → Entries to keep** to choose **50–5000**, then tap **Save**. The setting survives app restarts. Lowering it immediately removes the oldest entries; increasing it cannot restore deleted history. Changing journal retention does not reset sensor evidence or pending automation. **Use default (500)** restores the default value in the dialog.
-
-Distinct outline icons identify detected signals, missing signals, confirmed absence, unknown signals, waiting for confirmation, monitoring start/stop, Blink arming/disarming, account events, information, and errors. Types are recorded at the event source and preserved with the journal. Historical entries without a type use the information icon; historical error flags and details still identify errors. A timer’s waiting event never means absence was confirmed.
-
-Passwords, tokens, codes, secrets, cookies, authorization values, URL credentials, and query values are redacted **before storage and display**. The marker is `[REDACTED]`. HTTP bodies, forms, and headers are never added to the log. Original network causes are retained, including DNS, connection, TLS, and interrupted reads. Copying uses already sanitized text. Older events remain available in their original language.
-
-## Background battery access
-
-In **Home → Android permissions → Background battery use**, the **Allow unrestricted battery use** button requests a battery-optimization exemption specifically for Blink Sentinel. Android shows its own confirmation; allow it to reduce power-saving interference with home-sensor monitoring. This can increase battery consumption. The app does not change this setting silently or request it on startup.
-
-The displayed status comes from Android's `isIgnoringBatteryOptimizations` and refreshes when you return to the app. If exemption is already granted, the button becomes **Open battery settings**. If a phone does not support the direct request, the app opens the general optimization list, then app details as a fallback. Select Blink Sentinel and disable optimization there. Some manufacturers additionally expose **App info → Battery → Unrestricted**; on Samsung, also use **Never sleeping apps** if needed.
-
-The exemption is **partial**. It can improve background network availability but does not remove every Android or manufacturer restriction, Wi-Fi scan quotas, foreground-service requirements, or Bluetooth delivery limitations. Keep the silent foreground notification, test with the screen locked, and do not assume continuous operation is guaranteed. Denying or canceling the request leaves the existing Android setting unchanged.
-
-## Background service and reboot
-
-`WifiMonitorService` uses the **location** service type in Wi-Fi mode and **connectedDevice** in Bluetooth mode. It starts from the visible interface with the chosen mode's permissions. It can continue while the interface is closed or the phone is locked, subject to Android restrictions.
-
-Boot recovery requires the relevant permissions. Wi-Fi background recovery requires separately granted background location; without the necessary access, a silent notification asks the user to open the app. Bluetooth recovery requires Android 12+ and retained Nearby devices permissions. Android background-start restrictions still apply; a refused recovery is reported rather than repeatedly retried. A restart always requires new evidence.
-
-## Permissions
+### Permissions
 
 | Permission | Purpose | Request |
 | --- | --- | --- |
@@ -292,31 +232,119 @@ Boot recovery requires the relevant permissions. Wi-Fi background recovery requi
 
 Without notification permission on Android 13+, Android may allow the service while showing it only in the active-apps task manager; boot reminders will not be visible.
 
-## Blink integration and security
+### Background battery access
 
-`BlinkService` is the domain interface. `BlinkApiService` implements the mobile protocol observed in **blinkpy 0.25.9**: OAuth v2 with PKCE, memory-only cookies, CSRF, explicit 2FA, and access/refresh tokens. It recognizes HTTP 412 and HTTP 202 responses carrying 2FA information. It uses a stable UUID hardware identifier and community-observed client parameters centralized in the adapter.
+In **Home → Android permissions → Background battery use**, the **Allow unrestricted battery use** button requests a battery-optimization exemption specifically for Blink Sentinel. Android shows its own confirmation; allow it to reduce power-saving interference with home-sensor monitoring. This can increase battery consumption. The app does not change this setting silently or request it on startup.
 
-⚠️ This arming/disarming API is **unofficial and unsupported**. Blink's official EU data portability API does not document these commands. Authentication can fail because of account conditions, protocol changes, service protections, or network restrictions. HTTP 403, 406, and 429 are reported with actionable errors. Amazon SSO or CAPTCHA changes would require adapter changes; no protection bypass is implemented.
+The displayed status comes from Android's `isIgnoringBatteryOptimizations` and refreshes when you return to the app. If exemption is already granted, the button becomes **Open battery settings**. If a phone does not support the direct request, the app opens the general optimization list, then app details as a fallback. Select Blink Sentinel and disable optimization there. Some manufacturers additionally expose **App info → Battery → Unrestricted**; on Samsung, also use **Never sleeping apps** if needed.
 
-Regional URLs always use `rest-`: region `e005` becomes **`https://rest-e005.immedia-semi.com/`**, including older persisted sessions. An existing `rest-e005` prefix is not duplicated. Systems come from `homescreen`. Before a command, `EnsureBlinkState` queries the real state; matching states avoid duplicate POSTs, and unknown state blocks the command. After a POST, the adapter checks up to five times at two-second intervals for actual confirmation. HTTP acceptance alone is not confirmed success.
+The exemption is **partial**. It can improve background network availability but does not remove every Android or manufacturer restriction, Wi-Fi scan quotas, foreground-service requirements, or Bluetooth delivery limitations. Keep the silent foreground notification, test with the screen locked, and do not assume continuous operation is guaranteed. Denying or canceling the request leaves the existing Android setting unchanged.
 
-Network/server retries are bounded to four attempts, separated by 15, 30, and 60 seconds, and require fresh sensor evidence. New evidence or restored Internet can trigger reconciliation. Authentication, protocol, and rate-limit errors stop retries. Each retry reads real state first rather than blindly replaying an ambiguous POST.
+### Background service and reboot
 
-The selected system ID is captured before status lookup and passed explicitly to the command. Selection changes cancel an action rather than redirecting it to a different system. Persisted settings are checked again before automatic effects, independently of Flow timing.
+`WifiMonitorService` uses the **location** service type in Wi-Fi mode and **connectedDevice** in Bluetooth mode. It starts from the visible interface with the chosen mode's permissions. It can continue while the interface is closed or the phone is locked, subject to Android restrictions.
 
-New evidence cancels obsolete work and its HTTP call. If Blink already received a command, cancellation cannot recall it; the next desired state is queried and reconciled. Account for cloud latency in real tests.
+Boot recovery requires the relevant permissions. Wi-Fi background recovery requires separately granted background location; without the necessary access, a silent notification asks the user to open the app. Bluetooth recovery requires Android 12+ and retained Nearby devices permissions. Android background-start restrictions still apply; a refused recovery is reported rather than repeatedly retried. A restart always requires new evidence.
 
-### Storage
+## Event log and diagnostics
 
-- Passwords and 2FA codes are never saved in preferences, saved UI state, or logs.
-- Tokens, account ID, region, and UUID use `noBackupFilesDir`, **AES-256-GCM**, a non-exportable **Android Keystore** key, and atomic writes.
-- Non-secret settings use **Preferences DataStore**. The bounded local event log excludes secrets and HTTP bodies.
-- Android backup and app-data transfer are excluded. TLS validation remains enabled; cleartext HTTP is forbidden by the manifest.
-- `FLAG_SECURE` restricts screenshots and recent-app previews.
-- A corrupt session or lost key requires reauthentication. No plaintext fallback exists.
-- **Sign out of Blink** clears the local session and stops monitoring. It does not claim server-side token revocation; use the official Blink app for remote account/device management.
+Errors appear **in red with a date, warning icon, and explicit message**, inside a red framed card. Tap the card or **View error details** for scrollable, selectable, copyable details: operation, HTTP method, actual request URL, HTTP status, exception type/message, causes, and full stack trace. Failure before a response shows **No HTTP status received**. Interrupted reads after headers retain the received status. Parsing failures remain associated with their request.
 
-## Architecture
+The persistent log keeps **500 entries by default**, newest first. Open **Event log → Log settings → Entries to keep** to choose **50–5000**, then tap **Save**. The setting survives app restarts. Lowering it immediately removes the oldest entries; increasing it cannot restore deleted history. Changing journal retention does not reset sensor evidence or pending automation. **Use default (500)** restores the default value in the dialog.
+
+Distinct outline icons identify detected signals, missing signals, confirmed absence, unknown signals, waiting for confirmation, monitoring start/stop, Blink arming/disarming, account events, information, and errors. Types are recorded at the event source and preserved with the journal. Historical entries without a type use the information icon; historical error flags and details still identify errors. A timer’s waiting event never means absence was confirmed.
+
+Passwords, tokens, codes, secrets, cookies, authorization values, URL credentials, and query values are redacted **before storage and display**. The marker is `[REDACTED]`. HTTP bodies, forms, and headers are never added to the log. Original network causes are retained, including DNS, connection, TLS, and interrupted reads. Copying uses already sanitized text. Older events remain available in their original language.
+
+![Dark DEMO error details with request context, exception causes, and selectable scrollable technical information](docs/screenshots/error-details-dark.png)
+
+## Development
+
+🛠️ This is a native Kotlin / Jetpack Compose project, directly importable in Android Studio.
+
+### Development requirements
+
+- Android Studio compatible with **Android Gradle Plugin 9.4.1**, a full compatible **JDK** (validated with JBR / OpenJDK **21.0.11**), SDK Platform **35**, Build-Tools **35.0.0** for the documented verification commands, **36.0.0** for the current AGP build, and Platform-Tools for `adb`.
+- Internet access for the first download of Gradle and Google Maven / Maven Central dependencies.
+
+Pinned versions: Kotlin 2.2.10, Compose BOM 2025.04.01, AGP 9.4.1, Gradle 9.6.0. Java/Kotlin bytecode targets Java 17; `compileSdk` and `targetSdk` are 35. AGP 9.4.1 selects Build-Tools 36.0.0 despite the retained `buildToolsVersion = "35.0.0"` declaration; both tool versions were available during validation.
+
+GNU Make and Bash are needed for the convenience commands. The Gradle wrapper is included; no separate Gradle installation is required.
+
+### Open in Android Studio
+
+If using a source archive:
+
+```bash
+tar -xzf blink-wifi-automation.tar.gz
+```
+
+Use **Open** and select the top-level `blink-wifi-automation` directory containing `settings.gradle.kts`, then wait for Gradle synchronization. Open the whole project, not just `app`.
+
+Under **Settings → Build, Execution, Deployment → Build Tools → Gradle**, select a compatible JDK. Install SDK Platform 35 and Build-Tools 35.0.0 in **SDK Manager**. Android Studio creates `local.properties` with your local SDK path; machine-specific SDK paths should not be distributed.
+
+Connect your phone, enable **Developer options → USB debugging**, accept the computer's RSA key, select the `app` module and phone, then choose **Run**.
+
+### Makefile commands
+
+Run these commands from the project root. `make` shows categorized help; use `NO_COLOR= make help` to disable ANSI colors while retaining emojis.
+
+#### Help, formatting, and tests
+
+| Command | What it does |
+| --- | --- |
+| `make` / `make help` | Shows the logo and categorized command help. |
+| `make fmt` | Formats Kotlin and Kotlin DSL files with `ktlintFormat`; modifies source files. |
+| `make test` | Runs JVM unit tests with `testDebugUnitTest`. |
+| `make test-one TEST=dev.homesentinel.PresenceMachineTest` | Runs one JVM test class; use its fully qualified name. |
+| `make lint` | Runs Android lint; the HTML report is under `app/build/reports/lint-results-debug.html`. |
+| `make check` | Runs formatting, JVM tests, then lint; stops if a step fails. |
+| `make tasks` | Lists available Gradle tasks. |
+
+🧪 `make test` does not start an emulator or show clicks on a phone. Instrumentation tests and the documentation screenshot runner are separate; see [screenshot regeneration](docs/screenshots/README.md#regenerate).
+
+#### Build and install
+
+| Command | What it does |
+| --- | --- |
+| `make debug` | Builds `app/build/outputs/apk/debug/app-debug.apk`. |
+| `make build` | Runs `make check`, then builds the debug APK. |
+| `make release-apk` | Builds the local release variant without publishing; unsigned unless release signing is configured. |
+| `make install` | Builds and installs the debug variant on a connected, authorized device or emulator using Gradle. |
+| `make clean` | Removes Gradle build outputs. |
+
+#### Publishing commands
+
+| Command | What it does |
+| --- | --- |
+| `make push` | Stages all changes, checks the required Git identity before committing, commits if needed, and pushes the current branch. |
+| `make release VERSION=0.1.2 JKS_FILE=/secure/path/release.jks` | Formats, tests, lints, updates the version, builds and verifies a signed release APK, commits/pushes, and creates a GitHub release. |
+
+For publishing prerequisites, destination variables, and signing, see [GitHub publishing](#github-publishing).
+
+### Build and test
+
+You can also run verification and builds directly through the Gradle wrapper. Linux / macOS:
+
+```bash
+./gradlew testDebugUnitTest lintDebug assembleDebug
+```
+
+Windows PowerShell:
+
+```powershell
+.\gradlew.bat testDebugUnitTest lintDebug assembleDebug
+```
+
+If the SDK is not detected, set `ANDROID_HOME` or create `local.properties`:
+
+```properties
+sdk.dir=/path/to/Android/Sdk
+```
+
+The debug APK is `app/build/outputs/apk/debug/app-debug.apk`, signed with the local debug key. `make release-apk` / `assembleRelease` produces an unsigned APK unless release signing is configured. To create a distributable signed release, use [make release](#what-make-release-does) or Android Studio's **Generate Signed Bundle / APK**.
+
+### Architecture
 
 ```text
 app/src/main/java/dev/homesentinel/
@@ -345,6 +373,122 @@ app/src/main/java/dev/homesentinel/
 
 `SentinelApplication` / `AppGraph` provide application-scoped dependencies and restoration without a DI framework. `StateFlow` drives Compose; network coroutines are cancellable. A mutex serializes manual/automatic commands. Pure policies are JVM-testable, with injected clocks and MockWebServer endpoints. No periodic WorkManager job polls Wi-Fi or bypasses Android limits.
 
+## GitHub publishing
+
+🚀 Publishing requires GNU Make, Bash, Git, GitHub CLI (`gh`), a compatible JDK with `java` and `keytool`, and Android SDK Build-Tools with `apksigner`. Run the command from an interactive terminal in the project directory. Create the GitHub repository and authenticate with `gh auth login` first.
+
+Configure the repository's Git identity before any automatic commit. Example:
+
+```bash
+git config user.name "John Doe"
+git config user.email "john.doe@example.com"
+```
+
+These are placeholder values. Use your own Git identity; the publishing targets verify that it matches the expected identity configured in the Makefile before creating a commit. Repository and branch selection are configured below.
+
+### Publishing variables
+
+| Variable | Purpose / default |
+| --- | --- |
+| `GIT_MAIN_REPO` | Default push destination and release destination: `https://github.com/0x00F6/blink-sentinel.git`. |
+| `GIT_REPO` | Overrides the destination for `make push`; accepts `OWNER/REPOSITORY` or a GitHub HTTPS URL. Release uses `GIT_MAIN_REPO`. |
+| `GIT_BRANCH` | Optional branch check; must match the checked-out branch. Defaults to the current branch. |
+| `GIT_REMOTE` | Remote name, default `origin`; its URL must match the destination. |
+| `GIT_COMMIT_MESSAGE` | Automatic commit message, default `chore: publish Blink Sentinel project`. |
+| `VERSION` | Required for release, in `MAJOR.MINOR.PATCH` format. |
+| `JKS_FILE` | Required release keystore path; can be supplied on the command line or exported in the environment. |
+| `JKS_ALIAS` | Optional signing key alias; otherwise prompted interactively. |
+| `NO_COLOR` | Disables ANSI colors when present, even with an empty value; emojis remain. |
+
+```bash
+make push GIT_REPO=OWNER/REPOSITORY GIT_BRANCH=main GIT_REMOTE=origin \
+  GIT_COMMIT_MESSAGE="docs: improve setup guide"
+```
+
+Review local changes before publishing: `make push` and `make release` stage all repository changes, including formatting edits.
+
+### Create a signing keystore
+
+🔑 A keystore is a local file containing the private key used to sign your APK. To create one in Android Studio:
+
+1. Open **Build → Generate Signed Bundle / APK**, select **APK**, and click **Next**.
+2. Beside **Key store path**, click **Create new**.
+3. Choose a location outside this Git repository, such as `/home/your-user/.android/blink-sentinel-release.jks`, and set a strong keystore password.
+4. Set the key alias, for example `blink-sentinel`, its password, a validity of at least **25 years**, and the certificate information requested by the dialog.
+5. Save the keystore. You may finish the wizard to build a signed APK, or cancel the remaining build steps after the keystore has been created.
+
+See the [official Android signing guide](https://developer.android.com/studio/publish/app-signing) for the complete wizard. Keep a secure backup of the keystore, alias, and passwords. Use the same signing key for future updates. Do not commit the keystore or passwords, or store passwords in your shell configuration.
+
+### Configure the keystore path
+
+You can provide the path with each command:
+
+```bash
+make release VERSION=0.1.2 JKS_FILE="$HOME/.android/blink-sentinel-release.jks"
+```
+
+Or add these exports to `~/.zshrc`, using your actual path and key alias:
+
+```zsh
+export JKS_FILE="$HOME/.android/blink-sentinel-release.jks"
+export JKS_ALIAS="blink-sentinel"
+```
+
+Reload the shell configuration with `source ~/.zshrc` or open a new terminal. Then run:
+
+```bash
+make release VERSION=0.1.2
+```
+
+`JKS_FILE` is required and must refer to an existing keystore. `JKS_ALIAS` is optional: when omitted, the command asks for the alias. Exported environment variables are accepted; command-line values override them.
+
+### What make release does
+
+📦 For `VERSION=0.1.2`, the command performs these steps:
+
+1. Validates the repository, version format (`MAJOR.MINOR.PATCH`), keystore path, and JDK tools.
+2. Runs `make check`: Kotlin formatting (`ktlintFormat`), all JVM unit tests (`testDebugUnitTest`), and Android lint (`lintDebug`), in that order. A failure stops the release before the password prompts or version change. Emulator instrumentation tests are separate and are not part of this check.
+3. Prompts for the keystore password without displaying it, asks for the alias if needed, and validates access to that alias. It then prompts for the private key password; press **Enter** to reuse the keystore password.
+4. Writes `versionName = "0.1.2"` to `app/build.gradle.kts` and logs the old and new values. Subsequent local builds use this version too. An existing tag or GitHub release with this version stops publication.
+5. Builds the **release variant** with the supplied key, using `assembleRelease --no-daemon`. Passwords are passed through temporary environment variables and cleared from the release shell after the build.
+6. Verifies the signature of `app/build/outputs/apk/release/app-release.apk` with `apksigner`. A missing APK or failed signature check stops publication.
+7. Stages all repository changes, including formatting and version changes, checks the Git identity, commits if needed, and pushes the current branch.
+8. Creates the GitHub release tagged **`v0.1.2`**, generates release notes, and uploads the signed APK. The APK is installable on compatible devices; updating an existing installation also requires a compatible signing key.
+
+To select another release repository or branch, use:
+
+```bash
+make release VERSION=0.1.2 \
+  GIT_MAIN_REPO=https://github.com/OWNER/REPOSITORY.git \
+  GIT_BRANCH=main
+```
+
+A failure after the version update can leave local changes; review them before retrying. Reuse the same version only if its GitHub release and tag have not already been created.
+
+## Blink integration and security
+
+`BlinkService` is the domain interface. `BlinkApiService` implements the mobile protocol observed in **blinkpy 0.25.9**: OAuth v2 with PKCE, memory-only cookies, CSRF, explicit 2FA, and access/refresh tokens. It recognizes HTTP 412 and HTTP 202 responses carrying 2FA information. It uses a stable UUID hardware identifier and community-observed client parameters centralized in the adapter.
+
+⚠️ This arming/disarming API is **unofficial and unsupported**. Blink's official EU data portability API does not document these commands. Authentication can fail because of account conditions, protocol changes, service protections, or network restrictions. HTTP 403, 406, and 429 are reported with actionable errors. Amazon SSO or CAPTCHA changes would require adapter changes; no protection bypass is implemented.
+
+Regional URLs always use `rest-`: region `e005` becomes **`https://rest-e005.immedia-semi.com/`**, including older persisted sessions. An existing `rest-e005` prefix is not duplicated. Systems come from `homescreen`. Before a command, `EnsureBlinkState` queries the real state; matching states avoid duplicate POSTs, and unknown state blocks the command. After a POST, the adapter checks up to five times at two-second intervals for actual confirmation. HTTP acceptance alone is not confirmed success.
+
+Network/server retries are bounded to four attempts, separated by 15, 30, and 60 seconds, and require fresh sensor evidence. New evidence or restored Internet can trigger reconciliation. Authentication, protocol, and rate-limit errors stop retries. Each retry reads real state first rather than blindly replaying an ambiguous POST.
+
+The selected system ID is captured before status lookup and passed explicitly to the command. Selection changes cancel an action rather than redirecting it to a different system. Persisted settings are checked again before automatic effects, independently of Flow timing.
+
+New evidence cancels obsolete work and its HTTP call. If Blink already received a command, cancellation cannot recall it; the next desired state is queried and reconciled. Account for cloud latency in real tests.
+
+### Storage
+
+- Passwords and 2FA codes are never saved in preferences, saved UI state, or logs.
+- Tokens, account ID, region, and UUID use `noBackupFilesDir`, **AES-256-GCM**, a non-exportable **Android Keystore** key, and atomic writes.
+- Non-secret settings use **Preferences DataStore**. The bounded local event log excludes secrets and HTTP bodies.
+- Android backup and app-data transfer are excluded. TLS validation remains enabled; cleartext HTTP is forbidden by the manifest.
+- `FLAG_SECURE` restricts screenshots and recent-app previews.
+- A corrupt session or lost key requires reauthentication. No plaintext fallback exists.
+- **Sign out of Blink** clears the local session and stops monitoring. It does not claim server-side token revocation; use the official Blink app for remote account/device management.
+
 ## Real-phone validation
 
 Automated tests use local **MockWebServer** and fictitious sessions, not a live Blink account. Builds and simulated tests do not validate radio behavior, background delivery, or Blink's actual service. See [VALIDATION.md](VALIDATION.md) for exact commands, results, and limitations.
@@ -370,27 +514,16 @@ Automated tests use local **MockWebServer** and fictitious sessions, not a live 
 7. Trigger a network failure with no real secrets in logs. Check the red dated error, English diagnostic fields, original causes, full trace, scroll/copy, and redaction.
 8. Select a sensor without Blink or permissions ready: confirm the choice is retained, monitoring remains disabled, and the message identifies the prerequisite.
 
-## Artwork and notices
+## Project resources
 
-The original house / shield / Wi-Fi / camera logo is included at `artwork/logo.png`, displayed in the UI, and packaged in the adaptive launcher icon. Resources include a dedicated background, inset foreground, Android 13+ monochrome layer, and white notification icon. See [artwork/README.md](artwork/README.md), [LICENSE](LICENSE), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+🎨 The current header and launcher use the neon **b** artwork with a near-black adaptive background and a monochrome layer for themed icons. The original house/shield artwork and earlier launcher resources remain included; the white notification icon is retained. See [artwork/README.md](artwork/README.md).
 
-## Changes included in this version
+- 📜 [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md).
+- 🧭 [AGENTS.md](AGENTS.md): architecture, security, and behavior invariants for contributors.
+- ✅ [VALIDATION.md](VALIDATION.md): exact verification commands, results, and device/network limitations.
+- 🖼️ [Screenshot documentation](docs/screenshots/README.md): capture provenance, regeneration, and preview troubleshooting.
 
-- Wi-Fi/Bluetooth mode selection and reactive Home sensor labels.
-- Android 12+ BLE monitoring with Location off, version-specific permissions, screen-off filtering, compatibility guidance, arming delay and transient-loss protection.
-- Advertised/Android device names, classic Bluetooth discovery, selectable entries, radio-observation expiry, estimated distances and nearest-first sorting.
-- Automatic monitoring activation when a sensor is selected, with retained selection and clear prerequisite/startup errors.
-- Wi-Fi picker refresh on opening/resume, recent cache display separated from presence evidence, and permission/Location/scan-refusal guidance.
-- Silent notification and one handset-only vibration after a confirmed departure.
-- Last actual signal date/time including seconds on Home.
-- Correct regional Blink URLs using `rest-e005.immedia-semi.com`.
-- Persistent red dated errors with copyable complete HTTP/exception diagnostics and secret redaction.
-- English interface, notifications, error messages, documentation and relevant code comments.
-- App-specific battery exemption button, actual status refresh, and manufacturer/settings fallbacks.
-
-These behaviors and their preservation rules are also documented in [AGENTS.md](AGENTS.md). Exact build/test results and real-device limitations are in [VALIDATION.md](VALIDATION.md).
-
-## Technical sources
+### Technical sources
 
 - [Android — Doze, App Standby, and battery exemptions](https://developer.android.com/training/monitoring-device-state/doze-standby)
 - [Android — notification channels](https://developer.android.com/develop/ui/views/notifications/channels)

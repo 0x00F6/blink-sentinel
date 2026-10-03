@@ -38,13 +38,13 @@ def main():
         "dev.homesentinel.test/dev.homesentinel.docs.CaptureScreenshotsInstrumentation",
     ).decode()
     print(result.strip())
-    if "Captured 10 real application views with DEMO log fixtures" not in result or "INSTRUMENTATION_CODE: -1" not in result:
+    if "Captured 14 real application views with DEMO fixtures" not in result or "INSTRUMENTATION_CODE: -1" not in result:
         raise RuntimeError("Capture failed; existing documentation images were not replaced")
 
     destination = project / "docs/screenshots"
     captures = {}
     for theme in ("light", "dark"):
-        for screen in ("home", "network", "blink", "event-log", "error-details"):
+        for screen in ("home", "network", "blink", "blink-2fa", "blink-systems", "event-log", "error-details"):
             name = f"{screen}-{theme}.png"
             data = execute("exec-out", "run-as", "dev.homesentinel", "cat", f"files/documentation-screenshots/{name}")
             if not data.startswith(b"\x89PNG\r\n\x1a\n"):

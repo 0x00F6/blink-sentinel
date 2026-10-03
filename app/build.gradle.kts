@@ -2,7 +2,16 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jlleitschuh.gradle.ktlint")
 }
+
+val releaseSigningValues = listOf(
+    providers.environmentVariable("BLINK_SENTINEL_JKS_FILE").orNull,
+    providers.environmentVariable("BLINK_SENTINEL_JKS_STORE_PASSWORD").orNull,
+    providers.environmentVariable("BLINK_SENTINEL_JKS_KEY_ALIAS").orNull,
+    providers.environmentVariable("BLINK_SENTINEL_JKS_KEY_PASSWORD").orNull,
+)
+val releaseSigningConfigured = releaseSigningValues.all { !it.isNullOrBlank() }
 
 android {
     namespace = "dev.homesentinel"
@@ -15,13 +24,28 @@ android {
         versionCode = 1
         versionName = "0.1.1"
     }
+    if (releaseSigningConfigured) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseSigningValues[0]!!)
+                storePassword = releaseSigningValues[1]
+                keyAlias = releaseSigningValues[2]
+                keyPassword = releaseSigningValues[3]
+            }
+        }
+    }
     buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildTypes { release { isMinifyEnabled = false } }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            if (releaseSigningConfigured) signingConfig = signingConfigs.getByName("release")
+        }
+    }
     testOptions { unitTests.isReturnDefaultValues = true }
 }
 

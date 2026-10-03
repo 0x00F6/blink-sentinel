@@ -43,7 +43,7 @@ Use a full compatible JDK and SDK platform 35 / Build-Tools 35.0.0:
 ./gradlew clean
 ```
 
-Windows uses `gradlew.bat`. Debug APK: `app/build/outputs/apk/debug/app-debug.apk`. Release signing is configured by the owner; never commit keystores, passwords or signing secrets. The Gradle wrapper JAR and distribution checksum belong in the project. Do not commit `local.properties`, `.gradle`, IDE caches or dependency caches.
+Windows uses `gradlew.bat`. Debug APK: `app/build/outputs/apk/debug/app-debug.apk`. `make release VERSION=x.y.z JKS_FILE=/secure/path/key.jks` runs Kotlin formatting, JVM unit tests, and Android lint before prompting for the signing passwords and building/verifying a signed release APK. The key alias can be supplied with `JKS_ALIAS`; otherwise the command prompts for it. Release signing credentials stay in process memory/environment for the Gradle build only; never commit keystores, passwords or signing secrets. The Gradle wrapper JAR and distribution checksum belong in the project. Do not commit `local.properties`, `.gradle`, IDE caches or dependency caches.
 
 Use meaningful JVM tests for behavioral changes. Preserve coverage of deadlines, rapid return, duplicate broadcasts, stale evidence, fresh second confirmation, errors, token refresh and restart behavior. Mock remote requests with MockWebServer; do not use credentials or a real Blink account in automated tests. Use `kotlinx-coroutines-test` and virtual time for delayed decisions.
 
