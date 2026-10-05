@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="description" content="Blink Sentinel is a native Android app that automatically arms and disarms your Blink system using Wi-Fi or Bluetooth presence detection.">
+  <meta property="og:title" content="Blink Sentinel — Presence-aware Blink automation">
+  <meta property="og:description" content="Automatic Blink camera arming and disarming based on Wi-Fi or Bluetooth presence. Native Android, terminal-inspired and privacy-conscious.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://raw.githubusercontent.com/0x00F6/blink-sentinel/master/docs/screenshots/home-dark.png">
+  <meta property="og:url" content="https://0x00f6.github.io/blink-sentinel/">
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/0x00F6/blink-sentinel/master/artwork/terminal-b.png">
+  <title>Blink Sentinel — Android presence automation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070908;
+      --bg-soft: #0b0e0d;
+      --panel: rgba(12, 16, 14, .86);
+      --panel-strong: #0d120f;
+      --line: rgba(0, 255, 136, .20);
+      --line-strong: rgba(0, 255, 136, .52);
+      --green: #00ff88;
+      --green-soft: #77ffbb;
+      --cyan: #00d1ff;
+      --yellow: #ffd54a;
+      --red: #ff5263;
+      --text: #f2fff8;
+      --muted: #91a89b;
+      --shadow: 0 28px 80px rgba(0, 0, 0, .48);
+      --radius: 22px;
+      --mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(0, 255, 136, .075), transparent 28rem),
+        radial-gradient(circle at 88% 18%, rgba(0, 209, 255, .075), transparent 30rem),
+        linear-gradient(180deg, #070908 0%, #050706 100%);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .12;
+      background-image:
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, #000 0, transparent 72%);
+      z-index: -1;
+    }
+
+    a { color: inherit; }
+    img { max-width: 100%; display: block; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+
+    .wrap {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(18px);
+      background: rgba(7, 9, 8, .72);
+      border-bottom: 1px solid rgba(0, 255, 136, .12);
+    }
+
+    .nav-inner {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-family: var(--mono);
+      font-weight: 800;
+      letter-spacing: -.025em;
+    }
+
+    .brand img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 16px rgba(0,255,136,.28));
+    }
+
+    .brand small {
+      display: block;
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 22px;
+      align-items: center;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      transition: color .2s ease;
+    }
+
+    .nav-links a:hover { color: var(--green); }
+
+    .hero {
+      min-height: calc(100vh - 72px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.06fr) minmax(360px, .94fr);
+      gap: 56px;
+      align-items: center;
+      padding: 72px 0 82px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 22px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(0,255,136,.04);
+      color: var(--green);
+      font: 700 12px/1 var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 18px rgba(0,255,136,.95);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { transform: scale(.8); opacity: .55; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+
+    h1, h2, h3 { margin: 0; }
+    h1 {
+      max-width: 780px;
+      font: 800 clamp(46px, 7vw, 82px)/.98 var(--mono);
+      letter-spacing: -.065em;
+    }
+
+    h1 .accent { color: var(--green); text-shadow: 0 0 28px rgba(0,255,136,.16); }
+    h1 .cyan { color: var(--cyan); }
+
+    .lead {
+      max-width: 720px;
+      margin: 28px 0 0;
+      color: #b7c9bf;
+      font-size: clamp(17px, 2vw, 20px);
+      line-height: 1.75;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 34px;
+    }
+
+    .btn {
+      min-height: 54px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      padding: 0 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.09);
+      text-decoration: none;
+      font: 800 14px/1 var(--mono);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      color: #00190e;
+      background: var(--green);
+      border-color: var(--green);
+      box-shadow: 0 14px 38px rgba(0,255,136,.18);
+    }
+    .btn-primary:hover { background: #5dffad; }
+    .btn-secondary {
+      color: #dff9e9;
+      background: rgba(255,255,255,.035);
+      border-color: rgba(255,255,255,.12);
+    }
+    .btn-secondary:hover { border-color: var(--line-strong); }
+
+    .android-icon {
+      width: 24px;
+      height: 24px;
+      flex: 0 0 auto;
+      fill: currentColor;
+    }
+
+    .release-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font: 12px/1.6 var(--mono);
+    }
+    .release-note strong { color: var(--green-soft); }
+
+    .hero-visual {
+      position: relative;
+      min-height: 680px;
+      display: grid;
+      place-items: center;
+    }
+
+    .hero-visual::before,
+    .hero-visual::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    .hero-visual::before {
+      width: 280px;
+      height: 280px;
+      background: rgba(0,255,136,.10);
+      top: 12%;
+      left: 2%;
+    }
+
+    .hero-visual::after {
+      width: 240px;
+      height: 240px;
+      background: rgba(0,209,255,.08);
+      bottom: 10%;
+      right: -4%;
+    }
+
+    .phone {
+      position: relative;
+      width: min(390px, 100%);
+      padding: 10px;
+      border-radius: 34px;
+      background: linear-gradient(150deg, rgba(255,255,255,.14), rgba(255,255,255,.025));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow), 0 0 0 1px rgba(0,255,136,.06);
+      transform: rotate(2deg);
+      z-index: 2;
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 17px;
+      width: 78px;
+      height: 6px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: #050706;
+      opacity: .9;
+      z-index: 2;
+    }
+
+    .phone img {
+      width: 100%;
+      border-radius: 26px;
+      background: #000;
+    }
+
+    .status-float {
+      position: absolute;
+      z-index: 3;
+      min-width: 200px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(8,12,10,.90);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 18px 44px rgba(0,0,0,.38);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .status-float b { display: block; color: var(--green); margin-bottom: 4px; }
+    .status-left { left: -20px; top: 22%; }
+    .status-right { right: -24px; bottom: 19%; }
+    .status-right b { color: var(--cyan); }
+
+    section { padding: 100px 0; }
+    .section-head {
+      max-width: 760px;
+      margin-bottom: 44px;
+    }
+
+    .kicker {
+      color: var(--green);
+      font: 800 12px/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .18em;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font: 800 clamp(34px, 5vw, 58px)/1.03 var(--mono);
+      letter-spacing: -.05em;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      font-size: 17px;
+      margin: 20px 0 0;
+      max-width: 700px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .feature {
+      min-height: 220px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(15,20,17,.88), rgba(8,11,9,.88));
+      box-shadow: inset 0 1px rgba(255,255,255,.025);
+    }
+
+    .feature .num {
+      color: var(--green);
+      font: 800 12px/1 var(--mono);
+      letter-spacing: .15em;
+    }
+
+    .feature h3 {
+      margin-top: 34px;
+      font: 800 19px/1.2 var(--mono);
+    }
+
+    .feature p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .feature:nth-child(2) .num,
+    .feature:nth-child(5) .num { color: var(--cyan); }
+    .feature:nth-child(4) .num { color: var(--yellow); }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 18px;
+    }
+
+    .shot {
+      position: relative;
+      overflow: hidden;
+      min-height: 420px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.085);
+      background: #0b0e0d;
+      cursor: zoom-in;
+      grid-column: span 4;
+    }
+
+    .shot.wide { grid-column: span 6; min-height: 520px; }
+    .shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      transition: transform .35s ease;
+    }
+    .shot:hover img { transform: scale(1.015); }
+    .shot::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,255,136,.23);
+      background: rgba(5,8,6,.82);
+      color: #d8fbe7;
+      font: 700 11px/1 var(--mono);
+      backdrop-filter: blur(12px);
+    }
+
+    .terminal {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #070a08;
+      box-shadow: 0 28px 80px rgba(0,0,0,.34);
+    }
+
+    .terminal-bar {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: #0c100e;
+    }
+
+    .terminal-bar i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--muted);
+      opacity: .65;
+    }
+    .terminal-bar i:nth-child(1) { background: var(--red); }
+    .terminal-bar i:nth-child(2) { background: var(--yellow); }
+    .terminal-bar i:nth-child(3) { background: var(--green); }
+
+    .terminal-code {
+      padding: 26px;
+      overflow: auto;
+      color: #a6b7ad;
+      font: 13px/1.9 var(--mono);
+      white-space: nowrap;
+    }
+
+    .terminal-code .prompt { color: var(--green); }
+    .terminal-code .info { color: var(--cyan); }
+    .terminal-code .ok { color: var(--green-soft); }
+    .terminal-code .muted { color: #64736a; }
+
+    .download-card {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 32px;
+      align-items: center;
+      padding: 40px;
+      border: 1px solid var(--line-strong);
+      border-radius: 28px;
+      background:
+        linear-gradient(115deg, rgba(0,255,136,.08), transparent 42%),
+        rgba(10,14,12,.88);
+    }
+
+    .download-card::after {
+      content: "ANDROID";
+      position: absolute;
+      right: -10px;
+      top: -26px;
+      color: rgba(0,255,136,.035);
+      font: 900 110px/1 var(--mono);
+      letter-spacing: -.08em;
+      pointer-events: none;
+    }
+
+    .download-card h2 { font-size: clamp(30px, 4vw, 48px); }
+    .download-card p { color: var(--muted); margin: 14px 0 0; max-width: 650px; }
+
+    footer {
+      padding: 34px 0 54px;
+      border-top: 1px solid rgba(255,255,255,.06);
+      color: #66776d;
+      font: 12px/1.7 var(--mono);
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .footer-inner a { color: #9eb4a7; text-decoration: none; }
+    .footer-inner a:hover { color: var(--green); }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0,0,0,.86);
+      backdrop-filter: blur(18px);
+    }
+    .lightbox.open { display: grid; }
+    .lightbox img {
+      max-width: min(980px, 94vw);
+      max-height: 90vh;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+    }
+    .lightbox button {
+      position: fixed;
+      top: 22px;
+      right: 22px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(12,16,14,.92);
+      color: white;
+      font: 700 24px/1 var(--sans);
+      cursor: pointer;
+    }
+
+    @media (max-width: 980px) {
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        gap: 34px;
+        padding-top: 54px;
+      }
+      .hero-copy { text-align: center; }
+      .lead { margin-inline: auto; }
+      .cta-row { justify-content: center; }
+      .eyebrow { margin-inline: auto; }
+      .release-note { text-align: center; }
+      .hero-visual { min-height: 620px; }
+      .feature-grid { grid-template-columns: repeat(2, 1fr); }
+      .shot { grid-column: span 6; }
+      .shot.wide { grid-column: span 6; }
+    }
+
+    @media (max-width: 680px) {
+      .wrap { width: min(100% - 28px, 1180px); }
+      .nav-links a:not(.github-link) { display: none; }
+      .brand span { font-size: 14px; }
+      section { padding: 74px 0; }
+      .hero { padding: 40px 0 70px; }
+      h1 { font-size: clamp(42px, 14vw, 66px); }
+      .hero-visual { min-height: 560px; }
+      .phone { width: min(330px, 88vw); transform: none; }
+      .status-float { min-width: 170px; font-size: 10px; }
+      .status-left { left: 0; top: 13%; }
+      .status-right { right: 0; bottom: 13%; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .shot, .shot.wide { grid-column: 1 / -1; min-height: 480px; }
+      .download-card { grid-template-columns: 1fr; padding: 28px; }
+      .download-card .btn { width: 100%; }
+      .terminal-code { padding: 20px; font-size: 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="Blink Sentinel home">
+        <img src="https://raw.githubusercontent.com/0x00F6/blink-sentinel/master/artwork/terminal-b.png" alt="Blink Sentinel logo">
+        <span>Blink Sentinel<small>presence automation</small></span>
+      </a>
+      <div class="nav-links" aria-label="Primary navigation">
+        <a href="#features">Features</a>
+        <a href="#screenshots">Screens</a>
+        <a href="#download">Download</a>
+        <a class="github-link" href="https://github.com/0x00F6/blink-sentinel">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <div class="wrap hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="dot"></span> Native Android · Kotlin</div>
+        <h1>Your Blink system, <span class="accent">armed by presence.</span></h1>
+        <p class="lead">
+          Blink Sentinel watches your selected home Wi-Fi network or Bluetooth device and automatically controls your Blink system after a confirmed departure or return.
+          No manual routine. No connection to the monitored Wi-Fi required.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/0x00F6/blink-sentinel/releases/latest/download/app-release.apk">
+            <svg class="android-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17.6 9.48 19.44 6.3a.63.63 0 1 0-1.09-.63l-1.86 3.22A10.7 10.7 0 0 0 12 7.9c-1.58 0-3.1.35-4.49.99L5.65 5.67a.63.63 0 1 0-1.09.63L6.4 9.48A10.85 10.85 0 0 0 1 18h22a10.85 10.85 0 0 0-5.4-8.52ZM7 15.25A1.25 1.25 0 1 1 7 12.75a1.25 1.25 0 0 1 0 2.5Zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Z"/>
+            </svg>
+            Download latest APK
+          </a>
+          <a class="btn btn-secondary" href="https://github.com/0x00F6/blink-sentinel">View source</a>
+        </div>
+        <div class="release-note">Latest verified release: <strong>v0.1.2</strong> · Android 10+ · APK direct download</div>
+      </div>
+
+      <div class="hero-visual" aria-label="Blink Sentinel app preview">
+        <div class="status-float status-left"><b>presence://home</b>Wi-Fi / BLE signal monitoring</div>
+        <div class="phone">
+          <img src="screenshots/blink-dark.png" alt="Blink Sentinel dark interface showing Blink account controls">
+        </div>
+        <div class="status-float status-right"><b>automation://ready</b>Arm away · Disarm home</div>
+      </div>
+    </div>
+
+    <section id="features">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">01 // capabilities</div>
+          <h2>Built for quiet, local presence automation.</h2>
+          <p>Terminal-inspired UI, explicit state, actionable diagnostics and Android-native background monitoring.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature">
+            <div class="num">[01] WIFI</div>
+            <h3>Wi-Fi presence</h3>
+            <p>Watch an exact home SSID without requiring the phone to connect to that network.</p>
+          </article>
+          <article class="feature">
+            <div class="num">[02] BLE</div>
+            <h3>Bluetooth mode</h3>
+            <p>Use a compatible BLE device as the home presence signal on Android 12 and later.</p>
+          </article>
+          <article class="feature">
+            <div class="num">[03] BLINK</div>
+            <h3>Automatic control</h3>
+            <p>Arm after confirmed absence and optionally disarm when the selected home sensor returns.</p>
+          </article>
+          <article class="feature">
+            <div class="num">[04] STATE</div>
+            <h3>Conservative decisions</h3>
+            <p>Fresh radio evidence and configurable delays reduce accidental state changes from stale observations.</p>
+          </article>
+          <article class="feature">
+            <div class="num">[05] LOG</div>
+            <h3>Detailed diagnostics</h3>
+            <p>Readable event history, red error states and copyable technical details when something goes wrong.</p>
+          </article>
+          <article class="feature">
+            <div class="num">[06] ANDROID</div>
+            <h3>Native experience</h3>
+            <p>Kotlin + Jetpack Compose, persistent settings and an interface designed to match Android background constraints.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenshots">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">02 // interface</div>
+          <h2>The app, exactly as it looks.</h2>
+          <p>Dark-mode captures from the project documentation. Click any screenshot to inspect it at full size.</p>
+        </div>
+        <div class="gallery">
+          <button class="shot wide" type="button" data-label="Home" data-full="screenshots/home-dark.png" aria-label="Open Home screenshot">
+            <img src="screenshots/home-dark.png" alt="Blink Sentinel Home dark theme">
+          </button>
+          <button class="shot wide" type="button" data-label="Network" data-full="screenshots/network-dark.png" aria-label="Open Network screenshot">
+            <img src="screenshots/network-dark.png" alt="Blink Sentinel Network dark theme">
+          </button>
+          <button class="shot" type="button" data-label="Blink sign-in" data-full="screenshots/blink-dark.png" aria-label="Open Blink sign-in screenshot">
+            <img src="screenshots/blink-dark.png" alt="Blink account screen">
+          </button>
+          <button class="shot" type="button" data-label="2FA" data-full="screenshots/blink-2fa-dark.png" aria-label="Open 2FA screenshot">
+            <img src="screenshots/blink-2fa-dark.png" alt="Blink two-factor authentication screen">
+          </button>
+          <button class="shot" type="button" data-label="Systems" data-full="screenshots/blink-systems-dark.png" aria-label="Open Systems screenshot">
+            <img src="screenshots/blink-systems-dark.png" alt="Blink system selection screen">
+          </button>
+          <button class="shot wide" type="button" data-label="Event log" data-full="screenshots/event-log-dark.png" aria-label="Open Event log screenshot">
+            <img src="screenshots/event-log-dark.png" alt="Blink Sentinel event log">
+          </button>
+          <button class="shot wide" type="button" data-label="Error details" data-full="screenshots/error-details-dark.png" aria-label="Open Error details screenshot">
+            <img src="screenshots/error-details-dark.png" alt="Blink Sentinel error details">
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">03 // signal flow</div>
+          <h2>Simple inputs. Explicit automation.</h2>
+        </div>
+        <div class="terminal" aria-label="Example Blink Sentinel event flow">
+          <div class="terminal-bar"><i></i><i></i><i></i></div>
+          <div class="terminal-code">
+            <div><span class="prompt">$</span> blink-sentinel monitor --mode wifi --sensor HOME_WIFI</div>
+            <div><span class="info">INFO</span> fresh observation received <span class="muted">presence=HOME</span></div>
+            <div><span class="info">INFO</span> sensor no longer visible <span class="muted">state=AWAY_PENDING</span></div>
+            <div><span class="info">INFO</span> arming delay elapsed; requesting fresh confirmation</div>
+            <div><span class="ok">OK</span> confirmed departure <span class="muted">state=AWAY</span></div>
+            <div><span class="ok">OK</span> Blink system armed</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="download">
+      <div class="wrap">
+        <div class="download-card">
+          <div>
+            <div class="kicker">04 // latest release</div>
+            <h2>Install Blink Sentinel on Android.</h2>
+            <p>Download the APK directly from the latest GitHub release. The current latest verified release is v0.1.2.</p>
+          </div>
+          <a class="btn btn-primary" href="https://github.com/0x00F6/blink-sentinel/releases/latest/download/app-release.apk">
+            <svg class="android-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17.6 9.48 19.44 6.3a.63.63 0 1 0-1.09-.63l-1.86 3.22A10.7 10.7 0 0 0 12 7.9c-1.58 0-3.1.35-4.49.99L5.65 5.67a.63.63 0 1 0-1.09.63L6.4 9.48A10.85 10.85 0 0 0 1 18h22a10.85 10.85 0 0 0-5.4-8.52ZM7 15.25A1.25 1.25 0 1 1 7 12.75a1.25 1.25 0 0 1 0 2.5Zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Z"/>
+            </svg>
+            Download APK
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <div>Blink Sentinel // open-source Android automation</div>
+      <div>
+        <a href="https://github.com/0x00F6/blink-sentinel/releases">Releases</a>
+        &nbsp;·&nbsp;
+        <a href="https://github.com/0x00F6/blink-sentinel/blob/master/README.md">Documentation</a>
+        &nbsp;·&nbsp;
+        <a href="https://github.com/0x00F6/blink-sentinel">Source</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot preview">
+    <button type="button" id="lightbox-close" aria-label="Close screenshot">×</button>
+    <img id="lightbox-image" src="" alt="">
+  </div>
+
+  <script>
+    const box = document.getElementById('lightbox');
+    const image = document.getElementById('lightbox-image');
+    const close = document.getElementById('lightbox-close');
+
+    function closeLightbox() {
+      box.classList.remove('open');
+      image.src = '';
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.shot').forEach((shot) => {
+      shot.addEventListener('click', () => {
+        image.src = shot.dataset.full;
+        image.alt = shot.querySelector('img').alt;
+        box.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        close.focus();
+      });
+    });
+
+    close.addEventListener('click', closeLightbox);
+    box.addEventListener('click', (event) => {
+      if (event.target === box) closeLightbox();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && box.classList.contains('open')) closeLightbox();
+    });
+  </script>
+</body>
+</html>
