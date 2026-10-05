@@ -4,6 +4,8 @@
 <p align="center">
   <a href="https://0x00f6.github.io/blink-sentinel">https://0x00f6.github.io/blink-sentinel</a>
 </p>
+
+
 # Blink Sentinel — Wi-Fi / Bluetooth monitoring
 
 A native Android app built with Kotlin and Jetpack Compose. It arms the selected [Blink](https://blinkforhome.com/) system after a confirmed absence of the home sensor (Wi-Fi or Bluetooth BLE), and optionally disarms it when that sensor reappears. The phone **does not need to connect to the monitored Wi-Fi network**.
