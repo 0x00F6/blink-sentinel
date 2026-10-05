@@ -1,5 +1,6 @@
 <p align="center">
   <img src="artwork/terminal-b.png" alt="Blink Sentinel logo" width="180">
+  <a href="https://0x00f6.github.io/blink-sentinel">https://0x00f6.github.io/blink-sentinel</a>
 </p>
 
 # Blink Sentinel — Wi-Fi / Bluetooth monitoring
